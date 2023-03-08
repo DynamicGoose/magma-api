@@ -1,2 +1,3 @@
 # Magma-API
-API for the Magma3D engine
+The Magma-API is used by the Magma3D engine. 
+## Features
