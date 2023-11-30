@@ -1,7 +1,9 @@
 [package]
-name = "magma-api"
-version = "0.0.1"
+name = "magma_api"
+version = "0.0.0"
 edition = "2021"
+license = "MIT"
+description = "API of the Magma3D game engine"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
