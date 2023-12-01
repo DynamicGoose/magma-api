@@ -1,7 +1,10 @@
 # Magma-API
+
 The Magma-API is used by the Magma3D engine. 
+
 ## Features
-- [ ] High-detail voxel-based rendering
+
+- [ ] High-detail voxel-hybrid rendering
 - [ ] Entity-component-system
 - [ ] advanced phyisics simulation
 - [ ] Extensibility with Web-assembly using Wasmer
@@ -9,5 +12,7 @@ The Magma-API is used by the Magma3D engine.
 - [ ] Large-scale 3D envitonments
 - [ ] VR-support
 - [ ] building UI
-## How it works
-## Credits
+
+## Disclaimer
+
+This is WIP!
