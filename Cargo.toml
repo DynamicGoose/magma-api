@@ -8,4 +8,13 @@ description = "API of the Magma3D game engine"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-magma_ecs = "0.1.0-alpha.1"
+magma_app = { path = "crates/magma_app" }                      # add version
+magma_audio = { path = "crates/magma_audio", optional = true } # add version
+
+[workspace]
+members = ["crates/*"]
+
+[features]
+default = ["audio"]
+
+audio = ["dep:magma_audio"]
