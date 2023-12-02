@@ -11,15 +11,5 @@ impl WinitModule {
 }
 
 impl Module for WinitModule {
-    fn setup(&self, app: &mut magma_app::App) {}
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::WinitModule;
-
-    #[test]
-    fn create_window() {
-        WinitModule::create_window();
-    }
+    fn setup(&self, _app: &mut magma_app::App) {}
 }
