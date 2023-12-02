@@ -1,14 +1,14 @@
 use magma_app::{App, SystemType, World};
 
 #[test]
-fn add_systems_and_run() {
+fn add_systems() {
     let mut app = App::new();
     app.add_systems(
         SystemType::Startup,
         (vec![&ref_system_startup], vec![&mut_system_startup]),
     );
     app.add_systems(SystemType::Update, (vec![], vec![&update_resource]));
-    app.run(&update_condition);
+    app.runner = &test_runner;
 }
 
 fn ref_system_startup(_: &World) {
@@ -25,6 +25,6 @@ fn update_resource(world: &mut World) {
     *world.get_resource_mut::<u32>().unwrap() += 1;
 }
 
-fn update_condition(world: &World) -> bool {
-    *world.get_resource::<u32>().unwrap() <= 100
+fn test_runner(app: App) {
+    assert!(app.world.get_resource::<u32>().is_none());
 }

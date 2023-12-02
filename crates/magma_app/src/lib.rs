@@ -6,11 +6,24 @@ pub mod module;
 type Systems<'a> = (Vec<&'a dyn Fn(&World)>, Vec<&'a dyn Fn(&mut World)>);
 
 /// The `App` struct holds all the apps data and defines the necessary functions and methods to operate on it.
-#[derive(Default)]
 pub struct App<'a> {
+    /// The `World` holds all the data of the entity-component-system
     pub world: World,
+    /// The runner of the `App`
+    pub runner: &'a dyn Fn(App),
     startup_systems: Systems<'a>,
     update_systems: Systems<'a>,
+}
+
+impl<'a> Default for App<'a> {
+    fn default() -> Self {
+        Self {
+            world: Default::default(),
+            runner: &default_runner,
+            startup_systems: Default::default(),
+            update_systems: Default::default(),
+        }
+    }
 }
 
 impl<'a> App<'a> {
@@ -83,18 +96,24 @@ impl<'a> App<'a> {
         }
     }
 
-    /// Run the application
-    pub fn run(&mut self, update_condition: &dyn Fn(&World) -> bool) {
-        self.world.startup(
-            self.startup_systems.0.clone(),
-            self.startup_systems.1.clone(),
-        );
-        self.world.update(
-            update_condition,
-            self.update_systems.0.clone(),
-            self.update_systems.1.clone(),
-        );
+    /// Run the Application
+    pub fn run(self) {
+        (self.runner)(self);
     }
+}
+
+pub fn default_runner(mut app: App) {
+    app.world
+        .startup(app.startup_systems.0.clone(), app.startup_systems.1.clone());
+    app.world.update(
+        &default_update_condition,
+        app.update_systems.0.clone(),
+        app.update_systems.1.clone(),
+    );
+}
+
+fn default_update_condition(_: &World) -> bool {
+    true
 }
 
 /// Used to specify if systems should be added to the `startup` or `update` loop of the `World`
