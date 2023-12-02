@@ -12,11 +12,13 @@ repository = "https://github.com/DynamicGoose/magma-api"
 [dependencies]
 magma_app = { path = "crates/magma_app", version = "0.1.0-alpha" }
 magma_audio = { path = "crates/magma_audio", optional = true }     # add version
+magma_winit = { path = "crates/magma_winit", optional = true }     # add version
 
 [workspace]
 members = ["crates/*"]
 
 [features]
-default = ["audio"]
+default = ["audio", "winit"]
 
 audio = ["dep:magma_audio"]
+winit = ["dep:magma_winit"]

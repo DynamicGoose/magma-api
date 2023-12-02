@@ -1,14 +1,25 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+use magma_app::module::Module;
+use winit::{event_loop::EventLoop, window::Window};
+
+pub struct WinitModule;
+
+impl WinitModule {
+    pub fn create_window() {
+        let event_loop = EventLoop::new().unwrap();
+        Window::new(&event_loop).unwrap();
+    }
+}
+
+impl Module for WinitModule {
+    fn setup(&self, app: &mut magma_app::App) {}
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::WinitModule;
 
     #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    fn create_window() {
+        WinitModule::create_window();
     }
 }
