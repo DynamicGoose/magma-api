@@ -1,4 +1,4 @@
-use magma_ecs::World;
+pub use magma_ecs::World;
 use module::Module;
 
 pub mod module;
@@ -66,7 +66,7 @@ pub enum SystemType {
 
 #[cfg(test)]
 mod tests {
-    use magma_ecs::World;
+    use crate::World;
 
     use crate::App;
     use crate::SystemType;
