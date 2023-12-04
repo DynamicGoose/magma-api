@@ -31,6 +31,7 @@ fn test_runner(mut app: App) {
         .startup(app.startup_systems.0, app.startup_systems.1);
     app.world
         .update(&condition, app.update_systems.0, app.update_systems.1);
+    assert_eq!(*app.world.get_resource::<u32>().unwrap(), 10);
 }
 
 fn condition(world: &World) -> bool {
