@@ -24,7 +24,6 @@ fn mut_system_startup(world: &mut World) {
 
 fn update_resource(world: &mut World) {
     *world.get_resource_mut::<u32>().unwrap() += 1;
-    println!("updated");
 }
 
 fn test_runner(mut app: App) {
