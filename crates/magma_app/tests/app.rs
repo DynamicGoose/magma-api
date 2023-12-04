@@ -9,6 +9,7 @@ fn add_systems() {
     );
     app.add_systems(SystemType::Update, (vec![], vec![&update_resource]));
     app.runner = &test_runner;
+    app.run();
 }
 
 fn ref_system_startup(_: &World) {
@@ -23,8 +24,16 @@ fn mut_system_startup(world: &mut World) {
 
 fn update_resource(world: &mut World) {
     *world.get_resource_mut::<u32>().unwrap() += 1;
+    println!("updated");
 }
 
-fn test_runner(app: App) {
-    assert!(app.world.get_resource::<u32>().is_none());
+fn test_runner(mut app: App) {
+    app.world
+        .startup(app.startup_systems.0, app.startup_systems.1);
+    app.world
+        .update(&condition, app.update_systems.0, app.update_systems.1);
+}
+
+fn condition(world: &World) -> bool {
+    *world.get_resource::<u32>().unwrap() < 10000
 }

@@ -11,8 +11,8 @@ pub struct App<'a> {
     pub world: World,
     /// The runner of the `App`
     pub runner: &'a dyn Fn(App),
-    startup_systems: Systems<'a>,
-    update_systems: Systems<'a>,
+    pub startup_systems: Systems<'a>,
+    pub update_systems: Systems<'a>,
 }
 
 impl<'a> Default for App<'a> {
