@@ -35,5 +35,5 @@ fn test_runner(mut app: App) {
 }
 
 fn condition(world: &World) -> bool {
-    *world.get_resource::<u32>().unwrap() < 10000
+    *world.get_resource::<u32>().unwrap() < 10
 }
