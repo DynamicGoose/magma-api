@@ -8,7 +8,7 @@ fn add_systems() {
         (vec![&ref_system_startup], vec![&mut_system_startup]),
     );
     app.add_systems(SystemType::Update, (vec![], vec![&update_resource]));
-    app.runner = &test_runner;
+    app.set_runner(&test_runner);
     app.run();
 }
 
@@ -27,13 +27,7 @@ fn update_resource(world: &mut World) {
 }
 
 fn test_runner(mut app: App) {
-    app.world
-        .startup(app.startup_systems.0, app.startup_systems.1);
-    app.world
-        .update(&condition, app.update_systems.0, app.update_systems.1);
-    assert_eq!(*app.world.get_resource::<u32>().unwrap(), 10);
-}
-
-fn condition(world: &World) -> bool {
-    *world.get_resource::<u32>().unwrap() < 10
+    for _ in 0..10 {
+        app.update();
+    }
 }

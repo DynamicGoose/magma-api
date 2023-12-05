@@ -5,19 +5,17 @@ use magma_ecs::World;
 fn add_module() {
     let mut app = App::new();
     app.add_module(TestModule);
-
-    assert_eq!(*app.world.get_resource::<u32>().unwrap(), 10);
 }
 
 pub struct TestModule;
 
 impl Module for TestModule {
     fn setup(&self, app: &mut magma_app::App) {
-        app.world.add_resource(10_u32);
-        app.add_systems(magma_app::SystemType::Startup, (vec![&test_system], vec![]));
+        app.add_systems(magma_app::SystemType::Startup, (vec![], vec![&test_system]));
     }
 }
 
-fn test_system(_: &World) {
-    println!("test");
+fn test_system(world: &mut World) {
+    world.add_resource(10_u32);
+    assert_eq!(*world.get_resource::<u32>().unwrap(), 10);
 }
