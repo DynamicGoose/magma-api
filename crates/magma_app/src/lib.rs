@@ -94,10 +94,12 @@ impl<'a> App<'a> {
         }
     }
 
+    /// Set the runner of the `App`
     pub fn set_runner(&mut self, runner: &'a dyn Fn(App)) {
         self.runner = runner;
     }
 
+    /// update the `App` once
     pub fn update(&mut self) {
         self.world.update(
             self.update_systems.0.to_owned(),
@@ -115,16 +117,16 @@ impl<'a> App<'a> {
     }
 }
 
-fn default_runner(mut app: App) {
-    loop {
-        app.update();
-    }
-}
-
 /// Used to specify if systems should be added to the `startup` or `update` loop of the `App`
 pub enum SystemType {
     Startup,
     Update,
+}
+
+fn default_runner(mut app: App) {
+    loop {
+        app.update();
+    }
 }
 
 #[cfg(test)]
