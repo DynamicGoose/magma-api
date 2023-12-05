@@ -1,13 +1,17 @@
-with import <nixpkgs> {};
-
-stdenv.mkDerivation rec {
-  name = "slint-env";
-  buildInputs = [
-    
+{ pkgs ? import <nixpkgs> { } }:
+let
+  libPath = with pkgs; lib.makeLibraryPath [
+    libGL
+    libxkbcommon
+    wayland
+    # xorg.libX11
+    # xorg.libXcursor
+    # xorg.libXi
+    # xorg.libXrandr
   ];
-
-  # WINIT_UNIX_BACKEND=wayland/x11
-
-  LD_LIBRARY_PATH = builtins.foldl'
-    (a: b: "${a}:${b}/lib") "${vulkan-loader}/lib" buildInputs;
+in
+with pkgs; mkShell {
+  inputsFrom = [ ];
+  buildInputs = [ rustup pkg-config python3  ];
+  LD_LIBRARY_PATH = "${libPath}";
 }
