@@ -7,7 +7,7 @@ type Systems<'a> = (Vec<&'a dyn Fn(&World)>, Vec<&'a dyn Fn(&mut World)>);
 
 /// The `App` struct holds all the apps data and defines the necessary functions and methods to operate on it.
 pub struct App<'a> {
-    world: World,
+    pub world: World,
     runner: &'a dyn Fn(App),
     startup_systems: Systems<'a>,
     update_systems: Systems<'a>,
