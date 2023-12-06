@@ -10,8 +10,6 @@ pub mod window;
 
 pub struct WinitModule;
 
-impl WinitModule {}
-
 impl Module for WinitModule {
     fn setup(&self, app: &mut magma_app::App) {
         app.world.add_resource(Windows(vec![Window::new()]));
@@ -31,23 +29,34 @@ fn winit_event_loop(mut app: App) {
 
     event_loop.set_control_flow(ControlFlow::Poll);
     event_loop
-        .run(|event, _elwt| match event {
+        .run(|event, elwt| match event {
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
                 window_id,
             } => {
                 println!("The close button was pressed; stopping");
                 let windows = &mut app.world.get_resource_mut::<Windows>().unwrap().0;
-                for window in 0..windows.len() - 1 {
-                    if windows[window].0.as_ref().unwrap().id() == window_id {
-                        windows.remove(window);
+                let indexes = 0..windows.len();
+                for window_index in indexes {
+                    let window = windows[window_index].0.as_ref();
+                    if window.is_some_and(|window| window.id() == window_id) {
+                        windows[window_index].0 = None;
                     }
                 }
             }
             Event::AboutToWait => {
                 app.update();
-                for window in &app.world.get_resource::<Windows>().unwrap().0 {
-                    window.0.as_ref().unwrap().request_redraw();
+                if app
+                    .world
+                    .get_resource::<Windows>()
+                    .unwrap()
+                    .0
+                    .iter()
+                    .filter(|window| window.0.is_some())
+                    .collect::<Vec<_>>()
+                    .is_empty()
+                {
+                    elwt.exit()
                 }
             }
             _ => (),
