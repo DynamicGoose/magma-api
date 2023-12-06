@@ -6,7 +6,5 @@ fn main() {
     app.add_module(WinitModule);
     let windows = app.world.get_resource_mut::<Windows>().unwrap();
     windows.add_window();
-    windows.add_window();
-    windows.add_window();
     app.run();
 }

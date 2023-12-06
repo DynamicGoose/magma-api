@@ -21,24 +21,34 @@ impl Module for WinitModule {
 
 fn winit_event_loop(mut app: App) {
     let event_loop = EventLoop::new().unwrap();
-    let windows = app.world.get_resource_mut::<Windows>().unwrap();
+    {
+        let windows = app.world.get_resource_mut::<Windows>().unwrap();
 
-    for window in &mut windows.0 {
-        window.0 = Some(WindowBuilder::new().build(&event_loop).unwrap());
+        for window in &mut windows.0 {
+            window.0 = Some(WindowBuilder::new().build(&event_loop).unwrap());
+        }
     }
 
     event_loop.set_control_flow(ControlFlow::Poll);
     event_loop
-        .run(|event, elwt| match event {
+        .run(|event, _elwt| match event {
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
-                ..
+                window_id,
             } => {
                 println!("The close button was pressed; stopping");
-                elwt.exit();
+                let windows = &mut app.world.get_resource_mut::<Windows>().unwrap().0;
+                for window in 0..windows.len() - 1 {
+                    if windows[window].0.as_ref().unwrap().id() == window_id {
+                        windows.remove(window);
+                    }
+                }
             }
             Event::AboutToWait => {
                 app.update();
+                for window in &app.world.get_resource::<Windows>().unwrap().0 {
+                    window.0.as_ref().unwrap().request_redraw();
+                }
             }
             _ => (),
         })
