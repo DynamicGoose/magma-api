@@ -8,6 +8,7 @@ use winit::{
 
 pub mod window;
 
+/// Adding the `WinitModule` to an `App` adds functionality for creating and managing windows.
 pub struct WinitModule;
 
 impl Module for WinitModule {
