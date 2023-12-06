@@ -1,6 +1,6 @@
 [package]
 name = "magma_app"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 edition = "2021"
 description = "Part of the Magma-API, which is the API of the Magma3D game engine."
 homepage = "https://dynamicgoose.github.io/magma3d-engine/"
