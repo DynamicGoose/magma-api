@@ -10,7 +10,7 @@ repository = "https://github.com/DynamicGoose/magma-api"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-magma_app = { path = "../magma_app", version = "0.1.0-alpha.1" }
+magma_app = { path = "../magma_app", version = "0.1.0-alpha.2" }
 winit = "0.29.4"
 
 # These need to be run on the main thread, which normal tests don't do
