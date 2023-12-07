@@ -1,7 +1,5 @@
-use std::ops::Deref;
-
 use magma_app::{module::Module, App};
-use window::{Window, Windows};
+use window::Window;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -22,18 +20,16 @@ impl Module for WinitModule {
 
 fn winit_event_loop(mut app: App) {
     let event_loop = EventLoop::new().unwrap();
-    {
-        let mut window_query = app.world.query();
+    let mut window_query = app.world.query();
 
-        let mut windows = window_query
-            .with_component::<Window>()
-            .unwrap()
-            .run_entity();
+    let windows = window_query
+        .with_component::<Window>()
+        .unwrap()
+        .run_entity();
 
-        for window in windows {
-            let window = &mut window.get_component::<Window>().unwrap();
-            window.0 = Some(WindowBuilder::new().build(&event_loop).unwrap());
-        }
+    for window in windows {
+        let mut window = window.get_component_mut::<Window>().unwrap();
+        window.0 = Some(WindowBuilder::new().build(&event_loop).unwrap());
     }
 
     event_loop.set_control_flow(ControlFlow::Poll);
@@ -44,12 +40,19 @@ fn winit_event_loop(mut app: App) {
                 window_id,
             } => {
                 println!("The close button was pressed; stopping");
-                let windows = &mut app.world.get_resource_mut::<Windows>().unwrap().0;
-                let indexes = 0..windows.len();
-                for window_index in indexes {
-                    let window = windows[window_index].0.as_ref();
-                    if window.is_some_and(|window| window.id() == window_id) {
-                        windows[window_index].0 = None;
+                let mut window_query = app.world.query();
+                let windows = window_query
+                    .with_component::<Window>()
+                    .unwrap()
+                    .run_entity();
+                for window in windows {
+                    let mut window = window.get_component_mut::<Window>().unwrap();
+                    if window
+                        .0
+                        .as_ref()
+                        .is_some_and(|window| window.id() == window_id)
+                    {
+                        window.0 = None;
                     }
                 }
             }
@@ -57,15 +60,13 @@ fn winit_event_loop(mut app: App) {
                 app.update();
                 if app
                     .world
-                    .get_resource::<Windows>()
+                    .query()
+                    .with_component::<Window>()
                     .unwrap()
-                    .0
-                    .iter()
-                    .filter(|window| window.0.is_some())
-                    .collect::<Vec<_>>()
+                    .run_entity()
                     .is_empty()
                 {
-                    elwt.exit()
+                    elwt.exit();
                 }
             }
             _ => (),
