@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use magma_app::{module::Module, App};
 use window::{Window, Windows};
 use winit::{
@@ -13,7 +15,7 @@ pub struct WinitModule;
 
 impl Module for WinitModule {
     fn setup(&self, app: &mut magma_app::App) {
-        app.world.add_resource(Windows(vec![Window::new()]));
+        app.world.register_component::<Window>();
         app.set_runner(&winit_event_loop);
     }
 }
@@ -21,9 +23,15 @@ impl Module for WinitModule {
 fn winit_event_loop(mut app: App) {
     let event_loop = EventLoop::new().unwrap();
     {
-        let windows = app.world.get_resource_mut::<Windows>().unwrap();
+        let mut window_query = app.world.query();
 
-        for window in &mut windows.0 {
+        let mut windows = window_query
+            .with_component::<Window>()
+            .unwrap()
+            .run_entity();
+
+        for window in windows {
+            let window = &mut window.get_component::<Window>().unwrap();
             window.0 = Some(WindowBuilder::new().build(&event_loop).unwrap());
         }
     }
