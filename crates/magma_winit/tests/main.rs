@@ -4,7 +4,7 @@ use magma_winit::{window::Window, WinitModule};
 fn main() {
     let mut app = App::new();
     app.add_module(WinitModule);
-    for _ in 0..100 {
+    for _ in 0..2 {
         app.world.spawn().with_component(Window::new()).unwrap();
     }
     app.add_systems(SystemType::Update, (vec![], vec![&close_windows]));

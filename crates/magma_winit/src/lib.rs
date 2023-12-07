@@ -40,24 +40,29 @@ fn winit_event_loop(mut app: App) {
                 window_id,
             } => {
                 println!("The close button was pressed; stopping");
-                let mut window_query = app.world.query();
-                let windows = window_query
+                let mut ids: Vec<usize> = vec![];
+                for window in app
+                    .world
+                    .query()
                     .with_component::<Window>()
                     .unwrap()
-                    .run_entity();
-                for window in windows {
-                    let mut window = window.get_component_mut::<Window>().unwrap();
-                    if window
+                    .run_entity()
+                {
+                    let mut window_component = window.get_component_mut::<Window>().unwrap();
+                    if window_component
                         .0
                         .as_ref()
                         .is_some_and(|window| window.id() == window_id)
                     {
-                        window.0 = None;
+                        window_component.0 = None;
+                        ids.push(window.id);
                     }
+                }
+                for id in ids {
+                    app.world.despawn(id).unwrap();
                 }
             }
             Event::AboutToWait => {
-                app.update();
                 if app
                     .world
                     .query()
@@ -68,6 +73,7 @@ fn winit_event_loop(mut app: App) {
                 {
                     elwt.exit();
                 }
+                app.update();
             }
             _ => (),
         })
