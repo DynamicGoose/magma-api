@@ -8,30 +8,19 @@ use winit::{
 
 pub mod window;
 
-/// Adding the `WinitModule` to an `App` adds functionality for creating and managing windows.
+/// Adding the `WinitModule` to an `App` adds functionality for creating and managing windows. It also automatically adds one window on application start.
 pub struct WinitModule;
 
 impl Module for WinitModule {
     fn setup(&self, app: &mut magma_app::App) {
         app.world.register_component::<Window>();
         app.set_runner(&winit_event_loop);
+        app.world.spawn().with_component(Window::new()).unwrap();
     }
 }
 
 fn winit_event_loop(mut app: App) {
     let event_loop = EventLoop::new().unwrap();
-    let mut window_query = app.world.query();
-
-    let windows = window_query
-        .with_component::<Window>()
-        .unwrap()
-        .run_entity();
-
-    for window in windows {
-        let mut window = window.get_component_mut::<Window>().unwrap();
-        window.0 = Some(WindowBuilder::new().build(&event_loop).unwrap());
-    }
-
     event_loop.set_control_flow(ControlFlow::Poll);
     event_loop
         .run(|event, elwt| match event {
@@ -63,15 +52,17 @@ fn winit_event_loop(mut app: App) {
                 }
             }
             Event::AboutToWait => {
-                if app
-                    .world
-                    .query()
-                    .with_component::<Window>()
-                    .unwrap()
-                    .run_entity()
-                    .is_empty()
-                {
+                let mut query = app.world.query();
+
+                let windows = query.with_component::<Window>().unwrap().run_entity();
+                if windows.is_empty() {
                     elwt.exit();
+                }
+                for window in windows {
+                    let mut window = window.get_component_mut::<Window>().unwrap();
+                    if window.0.is_none() {
+                        window.0 = Some(WindowBuilder::new().build(elwt).unwrap());
+                    }
                 }
                 app.update();
             }
