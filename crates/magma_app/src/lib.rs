@@ -53,7 +53,9 @@ impl<'a> App<'a> {
     ```
     */
     pub fn add_module(&mut self, module: impl Module + 'static) {
-        if !self.modules.contains(&module.type_id()) {
+        let type_id = module.type_id();
+        if !self.modules.contains(&type_id) {
+            self.modules.push(type_id);
             module.setup(self);
         }
     }
