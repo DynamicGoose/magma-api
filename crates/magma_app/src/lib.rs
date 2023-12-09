@@ -1,3 +1,5 @@
+use std::any::{Any, TypeId};
+
 pub use magma_ecs::World;
 use module::Module;
 
@@ -9,6 +11,7 @@ type Systems<'a> = (Vec<&'a dyn Fn(&World)>, Vec<&'a dyn Fn(&mut World)>);
 pub struct App<'a> {
     pub world: World,
     runner: &'a dyn Fn(App),
+    modules: Vec<TypeId>,
     startup_systems: Systems<'a>,
     update_systems: Systems<'a>,
 }
@@ -18,6 +21,7 @@ impl<'a> Default for App<'a> {
         Self {
             world: Default::default(),
             runner: &default_runner,
+            modules: vec![],
             startup_systems: Default::default(),
             update_systems: Default::default(),
         }
@@ -48,8 +52,10 @@ impl<'a> App<'a> {
     }
     ```
     */
-    pub fn add_module(&mut self, module: impl Module) {
-        module.setup(self);
+    pub fn add_module(&mut self, module: impl Module + 'static) {
+        if !self.modules.contains(&module.type_id()) {
+            module.setup(self);
+        }
     }
 
     /**
