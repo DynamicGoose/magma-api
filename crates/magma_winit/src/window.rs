@@ -8,4 +8,7 @@ impl Window {
     pub fn new() -> Self {
         Self::default()
     }
+    pub fn from(window: winit::window::Window) -> Self {
+        Self(Some(window))
+    }
 }

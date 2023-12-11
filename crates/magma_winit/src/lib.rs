@@ -6,6 +6,8 @@ use winit::{
     window::WindowBuilder,
 };
 
+pub use winit::*;
+
 pub mod window;
 
 /// Adding the `WinitModule` to an `App` adds functionality for creating and managing windows. It also automatically adds one window on application start.
