@@ -1,8 +1,4 @@
 use magma_app::{module::Module, World};
-use ui::UI;
-
-pub use egui;
-
 pub mod ui;
 
 pub struct UIModule;
