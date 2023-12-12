@@ -1,1 +1,1 @@
-pub struct UI(pub u32);
+pub struct Egui;
