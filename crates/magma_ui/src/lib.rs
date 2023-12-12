@@ -12,7 +12,7 @@ impl Module for UIModule {
     }
 }
 
-fn init_ui(world: &mut World) {
+fn init_ui(_world: &mut World) {
     todo!()
 }
 fn update_ui(_: &mut World) {

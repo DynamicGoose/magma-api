@@ -11,3 +11,4 @@ repository = "https://github.com/DynamicGoose/magma-api"
 
 [dependencies]
 magma_app = { path = "../magma_app", version = "0.1.0-alpha.2" }
+rodio = "0.17.3"
