@@ -4,6 +4,7 @@ let
     libGL
     libxkbcommon
     wayland
+    alsa-lib
     # xorg.libX11
     # xorg.libXcursor
     # xorg.libXi
@@ -12,6 +13,6 @@ let
 in
 with pkgs; mkShell {
   inputsFrom = [ ];
-  buildInputs = [ rustup ];
+  buildInputs = [ rustup pkg-config alsa-lib ];
   LD_LIBRARY_PATH = "${libPath}";
 }
