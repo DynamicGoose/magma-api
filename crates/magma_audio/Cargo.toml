@@ -1,9 +1,9 @@
 [package]
 name = "magma_audio"
-version = "0.0.0"
+version = "0.1.0-alpha"
 edition = "2021"
 license = "MIT"
-description = "Audio features for Magma3D"
+description = "Audio features for the Magma3D engine"
 homepage = "https://dynamicgoose.github.io/magma3d-engine/"
 repository = "https://github.com/DynamicGoose/magma-api"
 
