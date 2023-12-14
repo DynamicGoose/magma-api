@@ -23,12 +23,14 @@ impl Module for WinitModule {
             magma_app::SystemType::Update,
             (vec![], vec![&handle_close_request]),
         );
+        app.world.spawn().with_component(Window::new()).unwrap();
     }
 }
 
 fn winit_event_loop(mut app: App) {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
+    // Use pump_events or run_on_demand to allow access to event_loop from outside the event_loop
     event_loop
         .run(|event, elwt| {
             *app.world.get_resource_mut::<WinitEvent<()>>().unwrap() = event;
