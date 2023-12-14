@@ -17,11 +17,17 @@ fn open_windows(world: &mut World) {
 }
 
 fn close_windows(world: &mut World) {
-    let mut query = world.query();
-    let windows = query.with_component::<Window>().unwrap().run();
-    if windows.indexes.len() == 4 {
-        for index in windows.indexes {
-            world.despawn(index).unwrap();
-        }
+    let mut ids: Vec<usize> = vec![];
+    for window in world
+        .query()
+        .with_component::<Window>()
+        .unwrap()
+        .run_entity()
+    {
+        window.get_component_mut::<Window>().unwrap().0 = None;
+        ids.push(window.id);
+    }
+    for id in ids {
+        world.despawn(id).unwrap();
     }
 }
