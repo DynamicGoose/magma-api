@@ -1,4 +1,4 @@
-use magma_app::{module::Module, App};
+use magma_app::{module::Module, App, World};
 use window::Window;
 use winit::{
     event::{Event, WindowEvent},
@@ -6,6 +6,7 @@ use winit::{
     window::WindowBuilder,
 };
 
+pub use winit::event::Event as WinitEvent;
 pub use winit::*;
 
 pub mod window;
@@ -16,7 +17,12 @@ pub struct WinitModule;
 impl Module for WinitModule {
     fn setup(&self, app: &mut magma_app::App) {
         app.world.register_component::<Window>();
+        app.world.add_resource(WinitEvent::<()>::AboutToWait);
         app.set_runner(&winit_event_loop);
+        app.add_systems(
+            magma_app::SystemType::Update,
+            (vec![], vec![&handle_winit_events]),
+        );
         app.world.spawn().with_component(Window::new()).unwrap();
     }
 }
@@ -26,33 +32,33 @@ fn winit_event_loop(mut app: App) {
     event_loop.set_control_flow(ControlFlow::Poll);
     event_loop
         .run(|event, elwt| match event {
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                window_id,
-            } => {
-                println!("The close button was pressed; stopping");
-                let mut ids: Vec<usize> = vec![];
-                for window in app
-                    .world
-                    .query()
-                    .with_component::<Window>()
-                    .unwrap()
-                    .run_entity()
-                {
-                    let mut window_component = window.get_component_mut::<Window>().unwrap();
-                    if window_component
-                        .0
-                        .as_ref()
-                        .is_some_and(|window| window.id() == window_id)
-                    {
-                        window_component.0 = None;
-                        ids.push(window.id);
-                    }
-                }
-                for id in ids {
-                    app.world.despawn(id).unwrap();
-                }
-            }
+            // Event::WindowEvent {
+            //     event: WindowEvent::CloseRequested,
+            //     window_id,
+            // } => {
+            //     println!("The close button was pressed; stopping");
+            //     let mut ids: Vec<usize> = vec![];
+            //     for window in app
+            //         .world
+            //         .query()
+            //         .with_component::<Window>()
+            //         .unwrap()
+            //         .run_entity()
+            //     {
+            //         let mut window_component = window.get_component_mut::<Window>().unwrap();
+            //         if window_component
+            //             .0
+            //             .as_ref()
+            //             .is_some_and(|window| window.id() == window_id)
+            //         {
+            //             window_component.0 = None;
+            //             ids.push(window.id);
+            //         }
+            //     }
+            //     for id in ids {
+            //         app.world.despawn(id).unwrap();
+            //     }
+            // }
             Event::AboutToWait => {
                 let mut query = app.world.query();
 
@@ -66,9 +72,42 @@ fn winit_event_loop(mut app: App) {
                         window.0 = Some(WindowBuilder::new().build(elwt).unwrap());
                     }
                 }
+                *app.world.get_resource_mut::<WinitEvent<()>>().unwrap() = event;
                 app.update();
             }
-            _ => (),
+            _ => *app.world.get_resource_mut::<WinitEvent<()>>().unwrap() = event,
         })
         .unwrap();
+}
+
+fn handle_winit_events(world: &mut World) {
+    match world.get_resource::<WinitEvent<()>>().unwrap() {
+        Event::WindowEvent {
+            event: WindowEvent::CloseRequested,
+            window_id,
+        } => {
+            println!("The close button was pressed; stopping");
+            let mut ids: Vec<usize> = vec![];
+            for window in world
+                .query()
+                .with_component::<Window>()
+                .unwrap()
+                .run_entity()
+            {
+                let mut window_component = window.get_component_mut::<Window>().unwrap();
+                if window_component
+                    .0
+                    .as_ref()
+                    .is_some_and(|window| &window.id() == window_id)
+                {
+                    window_component.0 = None;
+                    ids.push(window.id);
+                }
+            }
+            for id in ids {
+                world.despawn(id).unwrap();
+            }
+        }
+        _ => (),
+    }
 }
