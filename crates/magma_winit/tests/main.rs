@@ -17,6 +17,7 @@ fn open_windows(world: &mut World) {
 }
 
 fn close_windows(world: &mut World) {
+    // println!("{:?}", world.get_resource::<Windows>().unwrap().events);
     let window_resource = world.get_resource_mut::<Windows>().unwrap();
     if window_resource.windows.len() == 4 {
         for i in 0..4 {
