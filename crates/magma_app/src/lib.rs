@@ -7,7 +7,7 @@ pub mod module;
 
 type Systems<'a> = (Vec<&'a dyn Fn(&World)>, Vec<&'a dyn Fn(&mut World)>);
 
-/// The `App` struct holds all the apps data and defines the necessary functions and methods to operate on it.
+/// The [`App`] struct holds all the apps data and defines the necessary functions and methods to operate on it.
 pub struct App<'a> {
     pub world: World,
     runner: &'a dyn Fn(App),
@@ -29,13 +29,13 @@ impl<'a> Default for App<'a> {
 }
 
 impl<'a> App<'a> {
-    /// Create a new `App`
+    /// Create a new [`App`]
     pub fn new() -> Self {
         Self::default()
     }
 
     /**
-    Add a `Module` to the `App`.
+    Add a [`Module`] to the [`App`].
     ```
     use magma_app::{module::Module, App};
 
@@ -61,7 +61,7 @@ impl<'a> App<'a> {
     }
 
     /**
-    Add systems to the `App`'s `World`. Systems must take either an immutable or a mutable reference to `World`.
+    Add systems to the [`App`]'s `World`. Systems must take either an immutable or a mutable reference to [`World`].
     ```
     use magma_app::{App, SystemType, World};
 
@@ -102,12 +102,12 @@ impl<'a> App<'a> {
         }
     }
 
-    /// Set the runner of the `App`
+    /// Set the runner of the [`App`]
     pub fn set_runner(&mut self, runner: &'a dyn Fn(App)) {
         self.runner = runner;
     }
 
-    /// update the `App` once
+    /// update the [`App`] once
     pub fn update(&mut self) {
         self.world.update(
             self.update_systems.0.to_owned(),
@@ -125,7 +125,7 @@ impl<'a> App<'a> {
     }
 }
 
-/// Used to specify if systems should be added to the `startup` or `update` loop of the `App`
+/// Used to specify if systems should be added to the `startup` or `update` loop of the [`App`]
 pub enum SystemType {
     Startup,
     Update,
