@@ -12,4 +12,4 @@ repository = "https://github.com/DynamicGoose/magma-api"
 [dependencies]
 iced = "0.10.0"
 iced_winit = "0.10.1"
-magma_app = { path = "../magma_app", version = "0.1.0-alpha.2" }
+magma_app = { path = "../magma_app", version = "0.1.0-alpha.3" }
