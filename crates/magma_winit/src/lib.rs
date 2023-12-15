@@ -1,5 +1,5 @@
 /*!
-This crates integrates winit into the Magma3D engine.
+This crates integrates [`winit`] into the Magma3D engine.
 Here is a basic usage example:
 ```
 use magma_app::{App, SystemType, World};
@@ -47,7 +47,7 @@ pub use winit;
 pub mod windows;
 
 /**
-Adding the `WinitModule` to an `App` adds functionality for creating and managing windows. It also automatically adds one window on application start.
+Adding the [`WinitModule`] to an [`App`] adds functionality for creating and managing windows. It also automatically adds one window on application start.
 ```
 use magma_app::{App, SystemType, World};
 use magma_winit::{windows::Windows, WinitModule};
@@ -74,7 +74,6 @@ impl Module for WinitModule {
 
 fn winit_event_loop(mut app: App) {
     loop {
-        // Use pump_events or run_on_demand to allow access to event_loop from outside the event_loop
         let windows = app.world.get_resource_mut::<Windows>().unwrap();
         windows
             .event_loop
@@ -90,7 +89,6 @@ fn winit_event_loop(mut app: App) {
 
 fn update(app: &mut App) -> bool {
     let windows = app.world.get_resource_mut::<Windows>().unwrap();
-    // println!("{:?}", windows.windows);
     if windows
         .windows
         .iter()

@@ -61,7 +61,7 @@ impl<'a> App<'a> {
     }
 
     /**
-    Add systems to the [`App`]'s `World`. Systems must take either an immutable or a mutable reference to [`World`].
+    Add systems to the [`App`]'s [`World`]. Systems must take either an immutable or a mutable reference to [`World`].
     ```
     use magma_app::{App, SystemType, World};
 

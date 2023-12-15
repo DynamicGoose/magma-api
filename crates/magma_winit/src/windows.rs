@@ -1,7 +1,7 @@
 use winit::{event::Event, event_loop::EventLoop, window::Window};
 
 /**
-After adding the `WinitModule` the `Windows` resource can be accessed.
+After adding the [`WinitModule`](crate::WinitModule) the [`Windows`] resource can be accessed.
 */
 pub struct Windows {
     pub windows: Vec<Option<winit::window::Window>>,
@@ -10,7 +10,7 @@ pub struct Windows {
 }
 
 impl Windows {
-    /// create a new instance of `Windows`
+    /// create a new instance of [`Windows`]
     pub fn new(event_loop: EventLoop<()>) -> Self {
         Self {
             windows: vec![],
