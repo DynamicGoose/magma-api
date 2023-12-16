@@ -1,10 +1,9 @@
-//! This crate provides the [`UIModule`], which can be added to your application along with an `update_ui`-system, which you must implement yourself.
-//! For ease of use the crate also reexports [`iced`] and [`iced_winit`].
-//! The [`UIModule`] also adds the [`WinitModule`] to your [`App`](magma_app::App), so you can draw your application to a window.
-//! Usage example using [`iced`]:
-//! ```
-//!
-//! ```
+/*!
+This crate provides the [`UIModule`], which can be added to your application along with an `update_ui`-system, which you must implement yourself.
+For ease of use the crate also reexports [`iced`] and [`iced_winit`].
+The [`UIModule`] also adds the [`WinitModule`] to your [`App`](magma_app::App), so you can draw your application to a window.
+When using this with iced, make sure to read the [`iced_winit`] documentation for e.g. converting winit windows to iced windows.
+*/
 
 use magma_app::{module::Module, World};
 use magma_winit::WinitModule;
