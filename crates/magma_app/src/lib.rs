@@ -1,8 +1,13 @@
+/*!
+This crate provides basic functionality for creating and running an [`App`].
+A [`Module`] trait is also provided for implementing additional functionality.
+*/
 use std::any::{Any, TypeId};
 
 pub use magma_ecs::World;
 use module::Module;
 
+/// Support for adding [`Module`]s
 pub mod module;
 
 type Systems<'a> = (Vec<&'a dyn Fn(&World)>, Vec<&'a dyn Fn(&mut World)>);
@@ -136,6 +141,3 @@ fn default_runner(mut app: App) {
         app.update();
     }
 }
-
-#[cfg(test)]
-mod tests {}

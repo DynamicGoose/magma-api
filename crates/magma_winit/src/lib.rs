@@ -44,6 +44,7 @@ use winit::{
 
 pub use winit;
 
+/// The [`Windows`] resource
 pub mod windows;
 
 /**

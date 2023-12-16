@@ -7,7 +7,6 @@ use magma_audio::kira::{
     sound::static_sound::{StaticSoundData, StaticSoundSettings},
 };
 use magma_app::App;
-
 use magma_audio::{sounds::Sounds, AudioModule};
 
 // create app
@@ -35,7 +34,7 @@ use sounds::Sounds;
 
 pub use kira;
 
-/// sounds resource
+/// Sounds resource
 pub mod sounds;
 
 /// Can be added to an [`App`](magma_app::App) for audio support

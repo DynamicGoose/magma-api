@@ -1,8 +1,6 @@
 use winit::{event::Event, event_loop::EventLoop, window::Window};
 
-/**
-After adding the [`WinitModule`](crate::WinitModule) the [`Windows`] resource can be accessed.
-*/
+/// After adding the [`WinitModule`](crate::WinitModule) the [`Windows`] resource can be accessed.
 pub struct Windows {
     pub windows: Vec<Option<winit::window::Window>>,
     pub event_loop: EventLoop<()>,
@@ -19,7 +17,7 @@ impl Windows {
         }
     }
     /**
-    spawn a new window
+    Spawn a new window
     ```
     use magma_app::App;
     use magma_winit::{WinitModule, windows::Windows};
@@ -37,7 +35,8 @@ impl Windows {
                 .push(Some(winit::window::Window::new(&self.event_loop).unwrap()));
         }
     }
-    /// despawn the window at the given index
+
+    /// Despawn the window at the given index
     pub fn despawn(&mut self, index: usize) {
         self.windows[index] = None;
     }
