@@ -1,6 +1,6 @@
 [package]
 name = "magma_api"
-version = "0.0.0"
+version = "0.1.0-alpha"
 edition = "2021"
 license = "MIT"
 description = "API of the Magma3D game engine"
