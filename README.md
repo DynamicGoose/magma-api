@@ -11,7 +11,7 @@ The Magma-API is used by the Magma3D engine.
 - [ ] Networking
 - [ ] Large-scale 3D envitonments
 - [ ] VR-support
-- [ ] building UI
+- [x] building UI
 
 ## Disclaimer
 
