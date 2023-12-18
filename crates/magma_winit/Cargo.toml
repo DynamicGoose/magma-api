@@ -1,6 +1,6 @@
 [package]
 name = "magma_winit"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 edition = "2021"
 description = "Part of the Magma-API, which is the API of the Magma3D game engine. This is responsable for handling windows."
 homepage = "https://dynamicgoose.github.io/magma3d-engine/"
