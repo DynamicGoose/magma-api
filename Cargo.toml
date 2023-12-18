@@ -1,6 +1,6 @@
 [package]
 name = "magma_api"
-version = "0.1.0-alpha"
+version = "0.1.0-alpha.1"
 edition = "2021"
 license = "MIT"
 description = "API of the Magma3D game engine"
@@ -10,7 +10,7 @@ repository = "https://github.com/DynamicGoose/magma-api"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-magma_app = { path = "crates/magma_app", version = "0.1.0-alpha.4" }
+magma_app = { path = "crates/magma_app", version = "0.1.0-alpha.5" }
 magma_audio = { path = "crates/magma_audio", optional = true, version = "0.1.0-alpha.1" }
 magma_winit = { path = "crates/magma_winit", optional = true, version = "0.1.0-alpha.4" }
 magma_ui = { path = "crates/magma_ui", optional = true, version = "0.1.0-alpha.1" }
