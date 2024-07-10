@@ -38,7 +38,7 @@ use magma_app::{module::Module, App, World};
 use windows::Windows;
 use winit::{
     event::{Event, WindowEvent},
-    event_loop::{self, ControlFlow, EventLoop},
+    event_loop::{ControlFlow, EventLoop}, window::Window,
 };
 
 pub use winit;
@@ -60,26 +60,33 @@ pub struct WinitModule;
 
 impl Module for WinitModule {
     fn setup(&self, app: &mut magma_app::App) {
-        let event_loop = EventLoop::new().unwrap();
-        event_loop.set_control_flow(ControlFlow::Poll);
-        app.world.add_resource(Windows::new(event_loop));
+        app.world.add_resource(Windows::new());
         app.set_runner(winit_event_loop);
         app.add_systems(
             magma_app::SystemType::Update,
-            (vec![], vec![&handle_close_request]),
+            vec![handle_close_request],
         );
-        app.world.get_resource_mut::<Windows>().unwrap().spawn();
     }
 }
 
 fn winit_event_loop(mut app: App) {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
-    app.world.add_resource(Windows::new(&event_loop));
+    app.world.add_resource(Windows::new());
     loop {
-        let windows = app.world.get_resource_mut::<Windows>().unwrap();
-        windows
-            .event_loop
+        let resources = app.world.resources_write();
+        let mut windows = resources.get_mut::<Windows>().unwrap();
+        if windows.spawn {
+            let window = event_loop.create_window(Window::default_attributes());
+            if let Some(none) = windows.windows.iter_mut().find(|window| window.is_none()) {
+                *none = Some(window);
+            } else {
+                self.windows
+                    .push(Some(window));
+            }
+            event_loop.create_window(Window);
+        }
+        event_loop
             .pump_events(Some(Duration::ZERO), |event, _| {
                 windows.events.push(event);
             });
@@ -105,7 +112,7 @@ fn update(app: &mut App) -> bool {
     true
 }
 
-fn handle_close_request(world: &mut World) {
+fn handle_close_request(world: &World) {
     let windows = world.get_resource_mut::<Windows>().unwrap();
     let mut index = None;
     for event in &windows.events {

@@ -1,19 +1,19 @@
-use winit::{event::Event, event_loop::EventLoop};
+use winit::{event::Event, event_loop::{self, EventLoop}, window::Window};
 
 /// After adding the [`WinitModule`](crate::WinitModule) the [`Windows`] resource can be accessed.
-pub struct Windows<'a> {
-    pub windows: Vec<Option<&'a winit::window::Window>>,
-    pub event_loop: &'a EventLoop<()>,
-    pub events: Vec<&'a Event<()>>,
+pub struct Windows {
+    pub windows: Vec<Option<winit::window::Window>>,
+    pub events: Vec<Event<()>>,
+    pub(crate) spawn: bool,
 }
 
-impl<'a> Windows<'a> {
+impl Windows {
     /// create a new instance of [`Windows`]
-    pub fn new(event_loop: &'a EventLoop<()>) -> Self {
+    pub fn new() -> Self {
         Self {
             windows: vec![],
-            event_loop,
             events: vec![],
+            spawn: false,
         }
     }
     /**
@@ -27,11 +27,13 @@ impl<'a> Windows<'a> {
     app.world.get_resource_mut::<Windows>().unwrap().spawn();
     ```
     */
-    pub fn add_window(&mut self, window: &'a winit::window::Window) {
+    pub fn spawn(&mut self) {
+        self.spawn = true;
         if let Some(none) = self.windows.iter_mut().find(|window| window.is_none()) {
             *none = Some(window);
         } else {
-            self.windows.push(Some(window));
+            self.windows
+                .push(Some(window));
         }
     }
 
