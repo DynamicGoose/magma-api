@@ -10,22 +10,22 @@ use module::Module;
 /// Support for adding [`Module`]s
 pub mod module;
 
-type Systems<'a> = (Vec<&'a dyn Fn(&World)>, Vec<&'a dyn Fn(&mut World)>);
+type Systems = Vec<fn(&World)>;
 
 /// The [`App`] struct holds all the apps data and defines the necessary functions and methods to operate on it.
-pub struct App<'a> {
+pub struct App {
     pub world: World,
-    runner: &'a dyn Fn(App),
+    runner: fn(App),
     modules: Vec<TypeId>,
-    startup_systems: Systems<'a>,
-    update_systems: Systems<'a>,
+    startup_systems: Systems,
+    update_systems: Systems,
 }
 
-impl<'a> Default for App<'a> {
+impl Default for App {
     fn default() -> Self {
         Self {
             world: Default::default(),
-            runner: &default_runner,
+            runner: default_runner,
             modules: vec![],
             startup_systems: Default::default(),
             update_systems: Default::default(),
@@ -33,7 +33,7 @@ impl<'a> Default for App<'a> {
     }
 }
 
-impl<'a> App<'a> {
+impl App {
     /// Create a new [`App`]
     pub fn new() -> Self {
         Self::default()
@@ -71,61 +71,33 @@ impl<'a> App<'a> {
     use magma_app::{App, SystemType, World};
 
     let mut app = App::new();
-    app.add_systems(SystemType::Startup, (vec![&example_system_ref], vec![&example_system_mut]));
+    app.add_systems(SystemType::Startup, vec![example_system]);
 
-    fn example_system_ref(_world: &World) {
-        // Do something
-    }
-
-    fn example_system_mut(_world: &mut World) {
+    fn example_system(_world: &World) {
         // E.g. change something in the World
     }
     ```
     */
-    pub fn add_systems(&mut self, systemtype: SystemType, systems: Systems<'a>) {
+    pub fn add_systems(&mut self, systemtype: SystemType, mut systems: Systems) {
         match systemtype {
-            SystemType::Startup => {
-                systems
-                    .0
-                    .iter()
-                    .for_each(|system| self.startup_systems.0.push(*system));
-                systems
-                    .1
-                    .iter()
-                    .for_each(|system| self.startup_systems.1.push(*system));
-            }
-            SystemType::Update => {
-                systems
-                    .0
-                    .iter()
-                    .for_each(|system| self.update_systems.0.push(*system));
-                systems
-                    .1
-                    .iter()
-                    .for_each(|system| self.update_systems.1.push(*system));
-            }
+            SystemType::Startup => self.startup_systems.append(&mut systems),
+            SystemType::Update => self.update_systems.append(&mut systems),
         }
     }
 
     /// Set the runner of the [`App`]
-    pub fn set_runner(&mut self, runner: &'a dyn Fn(App)) {
+    pub fn set_runner(&mut self, runner: fn(App)) {
         self.runner = runner;
     }
 
     /// update the [`App`] once
-    pub fn update(&mut self) {
-        self.world.update(
-            self.update_systems.0.to_owned(),
-            self.update_systems.1.to_owned(),
-        );
+    pub fn update(&self) {
+        self.world.update(&self.update_systems);
     }
 
     /// Run the Application
-    pub fn run(mut self) {
-        self.world.update(
-            self.startup_systems.0.to_owned(),
-            self.startup_systems.1.to_owned(),
-        );
+    pub fn run(self) {
+        self.world.update(&self.startup_systems);
         (self.runner)(self);
     }
 }
@@ -136,7 +108,7 @@ pub enum SystemType {
     Update,
 }
 
-fn default_runner(mut app: App) {
+fn default_runner(app: App) {
     loop {
         app.update();
     }

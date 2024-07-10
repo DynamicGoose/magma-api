@@ -38,8 +38,7 @@ use magma_app::{module::Module, App, World};
 use windows::Windows;
 use winit::{
     event::{Event, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
-    platform::pump_events::EventLoopExtPumpEvents,
+    event_loop::{self, ControlFlow, EventLoop},
 };
 
 pub use winit;
@@ -64,7 +63,7 @@ impl Module for WinitModule {
         let event_loop = EventLoop::new().unwrap();
         event_loop.set_control_flow(ControlFlow::Poll);
         app.world.add_resource(Windows::new(event_loop));
-        app.set_runner(&winit_event_loop);
+        app.set_runner(winit_event_loop);
         app.add_systems(
             magma_app::SystemType::Update,
             (vec![], vec![&handle_close_request]),
@@ -74,6 +73,9 @@ impl Module for WinitModule {
 }
 
 fn winit_event_loop(mut app: App) {
+    let event_loop = EventLoop::new().unwrap();
+    event_loop.set_control_flow(ControlFlow::Poll);
+    app.world.add_resource(Windows::new(&event_loop));
     loop {
         let windows = app.world.get_resource_mut::<Windows>().unwrap();
         windows

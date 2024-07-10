@@ -1,6 +1,6 @@
 [package]
 name = "magma_app"
-version = "0.1.0-alpha.5"
+version = "0.1.0-alpha.6"
 edition = "2021"
 description = "Part of the Magma-API, which is the API of the Magma3D game engine."
 homepage = "https://dynamicgoose.github.io/magma3d-engine/"
@@ -10,4 +10,4 @@ repository = "https://github.com/DynamicGoose/magma-api"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-magma_ecs = "0.1.0-alpha.3"
+magma_ecs = "0.1.0-alpha.4"

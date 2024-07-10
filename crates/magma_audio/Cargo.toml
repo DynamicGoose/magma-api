@@ -1,6 +1,6 @@
 [package]
 name = "magma_audio"
-version = "0.1.0-alpha.2"
+version = "0.1.0-alpha.3"
 edition = "2021"
 license = "MIT"
 description = "Audio features for the Magma3D engine"
@@ -10,5 +10,5 @@ repository = "https://github.com/DynamicGoose/magma-api"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-kira = "0.8.5"
-magma_app = { path = "../magma_app", version = "0.1.0-alpha.5" }
+kira = "0.9.3"
+magma_app = { path = "../magma_app", version = "0.1.0-alpha.6" }

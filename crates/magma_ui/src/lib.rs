@@ -12,11 +12,11 @@ pub use iced;
 pub use iced_winit;
 
 /// Adds support for creating ui
-pub struct UIModule(pub &'static dyn Fn(&mut World));
+pub struct UIModule(pub fn(&World));
 
 impl Module for UIModule {
     fn setup(&self, app: &mut magma_app::App) {
         app.add_module(WinitModule);
-        app.add_systems(magma_app::SystemType::Update, (vec![], vec![self.0]));
+        app.add_systems(magma_app::SystemType::Update, vec![self.0]);
     }
 }

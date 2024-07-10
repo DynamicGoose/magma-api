@@ -11,11 +11,11 @@ pub struct TestModule;
 
 impl Module for TestModule {
     fn setup(&self, app: &mut magma_app::App) {
-        app.add_systems(magma_app::SystemType::Startup, (vec![], vec![&test_system]));
+        app.add_systems(magma_app::SystemType::Startup, vec![test_system]);
     }
 }
 
-fn test_system(world: &mut World) {
+fn test_system(world: &World) {
     world.add_resource(10_u32);
-    assert_eq!(*world.get_resource::<u32>().unwrap(), 10);
+    assert_eq!(*world.resources_read().get_ref::<u32>().unwrap(), 10);
 }
