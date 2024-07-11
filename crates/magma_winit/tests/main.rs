@@ -4,21 +4,30 @@ use magma_winit::{windows::Windows, WinitModule};
 fn main() {
     let mut app = App::new();
     app.add_module(WinitModule);
-    app.world.get_resource_mut::<Windows>().unwrap().spawn();
-    app.add_systems(
-        SystemType::Update,
-        (vec![], vec![&open_windows, &close_windows]),
-    );
+    app.world
+        .resources_write()
+        .get_mut::<Windows>()
+        .unwrap()
+        .spawn();
+    app.add_systems(SystemType::Update, vec![open_windows, close_windows]);
     app.run();
 }
 
-fn open_windows(world: &mut World) {
-    world.get_resource_mut::<Windows>().unwrap().spawn();
+fn open_windows(world: &World) {
+    println!("open");
+    world
+        .resources_write()
+        .get_mut::<Windows>()
+        .unwrap()
+        .spawn();
+    println!("open_end")
 }
 
-fn close_windows(world: &mut World) {
-    // println!("{:?}", world.get_resource::<Windows>().unwrap().events);
-    let window_resource = world.get_resource_mut::<Windows>().unwrap();
+fn close_windows(world: &World) {
+    println!("close");
+    let mut resources = world.resources_write();
+    println!("write_close");
+    let window_resource = resources.get_mut::<Windows>().unwrap();
     if window_resource.windows.len() == 4 {
         for i in 0..4 {
             window_resource.despawn(i);

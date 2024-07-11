@@ -1,6 +1,7 @@
-use winit::{event::Event, event_loop::{self, EventLoop}, window::Window};
+use winit::event::Event;
 
 /// After adding the [`WinitModule`](crate::WinitModule) the [`Windows`] resource can be accessed.
+#[derive(Default)]
 pub struct Windows {
     pub windows: Vec<Option<winit::window::Window>>,
     pub events: Vec<Event<()>>,
@@ -29,12 +30,6 @@ impl Windows {
     */
     pub fn spawn(&mut self) {
         self.spawn = true;
-        if let Some(none) = self.windows.iter_mut().find(|window| window.is_none()) {
-            *none = Some(window);
-        } else {
-            self.windows
-                .push(Some(window));
-        }
     }
 
     /// Despawn the window at the given index
