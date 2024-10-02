@@ -1,10 +1,11 @@
-use winit::event::Event;
+use winit::event::{DeviceEvent, WindowEvent};
 
 /// After adding the [`WinitModule`](crate::WinitModule) the [`Windows`] resource can be accessed.
 #[derive(Default)]
 pub struct Windows {
     pub windows: Vec<Option<winit::window::Window>>,
-    pub events: Vec<Event<()>>,
+    pub window_events: Vec<WindowEvent>,
+    pub device_events: Vec<DeviceEvent>,
     pub(crate) spawn: bool,
 }
 
@@ -13,7 +14,8 @@ impl Windows {
     pub fn new() -> Self {
         Self {
             windows: vec![],
-            events: vec![],
+            window_events: vec![],
+            device_events: vec![],
             spawn: false,
         }
     }
