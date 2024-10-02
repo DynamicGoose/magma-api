@@ -12,7 +12,7 @@ app.world.resources_write().get_mut::<Windows>().unwrap().spawn();
 app.add_systems(SystemType::Update, vec![open_windows]);
 app.run();
 
-// open a new window every update and close them, once there's 4
+// close the window, while the app is running
 fn open_windows(world: &World) {
     let mut resources = world.resources_write();
     let window_resource = resources.get_mut::<Windows>().unwrap();
