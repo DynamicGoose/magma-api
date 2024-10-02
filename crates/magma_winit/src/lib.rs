@@ -1,5 +1,5 @@
 /*!
-This crates integrates [`winit`] into the Magma3D engine.
+This crates integrates [`winit`] into the Magma3D engine, in order to manage application windows.
 Here is a basic usage example:
 ```
 use magma_app::{App, SystemType, World};
@@ -9,16 +9,12 @@ let mut app = App::new();
 app.add_module(WinitModule);
 // spawn a window before running the app
 app.world.resources_write().get_mut::<Windows>().unwrap().spawn();
-app.add_systems(SystemType::Update, vec![open_windows, close_windows]);
+app.add_systems(SystemType::Update, vec![open_windows]);
 app.run();
 
-// open a new window every update
+// open a new window every update and close them, once there's 4
 fn open_windows(world: &World) {
     world.resources_write().get_mut::<Windows>().unwrap().spawn();
-}
-
-// close all the windows when 4 have been spawned
-fn close_windows(world: &World) {
     let mut resources = world.resources_write();
     let window_resource = resources.get_mut::<Windows>().unwrap();
     if window_resource.windows.len() == 4 {
@@ -26,6 +22,7 @@ fn close_windows(world: &World) {
             window_resource.despawn(i);
         }
     }
+    println!("lel");
 }
 ```
 */
@@ -35,6 +32,7 @@ use std::time::Duration;
 use magma_app::{module::Module, App, World};
 use windows::Windows;
 use winit::{
+    application::ApplicationHandler,
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     platform::pump_events::EventLoopExtPumpEvents,
@@ -66,9 +64,52 @@ impl Module for WinitModule {
     }
 }
 
-fn winit_event_loop(mut app: App) {
+struct WrappedApp {
+    app: App,
+}
+
+impl ApplicationHandler for WrappedApp {
+    fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        todo!()
+    }
+
+    fn window_event(
+        &mut self,
+        event_loop: &winit::event_loop::ActiveEventLoop,
+        window_id: winit::window::WindowId,
+        event: WindowEvent,
+    ) {
+        match event {
+            WindowEvent::CloseRequested => {
+                let resources = self.app.world.resources_read();
+                let windows = resources.get_ref::<Windows>().unwrap();
+                let mut index = None;
+
+                index = windows.windows.iter().position(|window| {
+                    window
+                        .as_ref()
+                        .is_some_and(|window| window.id() == *window_id)
+                });
+
+                let mut resources = world.resources_write();
+                if let Some(index) = index {
+                    resources.get_mut::<Windows>().unwrap().despawn(index);
+                }
+            }
+            _ => {
+                let mut resources = app.world.resources_write();
+                let windows = resources.get_mut::<Windows>().unwrap();
+                windows.events.push(event);
+            }
+        }
+    }
+}
+
+fn winit_event_loop(app: App) {
     let mut event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
+    let mut app = WrappedApp { app };
+    event_loop.run_app(&mut app);
     loop {
         {
             let mut resources = app.world.resources_write();
@@ -90,7 +131,7 @@ fn winit_event_loop(mut app: App) {
                 windows.events.push(event);
             });
         }
-        if !update(&mut app) {
+        if !update(&app) {
             break;
         }
         app.world
@@ -101,7 +142,7 @@ fn winit_event_loop(mut app: App) {
     }
 }
 
-fn update(app: &mut App) -> bool {
+fn update(app: &App) -> bool {
     {
         let resources = app.world.resources_read();
         let windows = resources.get_ref::<Windows>().unwrap();
@@ -120,7 +161,7 @@ fn update(app: &mut App) -> bool {
 }
 
 fn handle_close_request(world: &World) {
-    let resources = world.resources_write();
+    let resources = world.resources_read();
     let windows = resources.get_ref::<Windows>().unwrap();
     let mut index = None;
     for event in &windows.events {

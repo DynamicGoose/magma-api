@@ -25,7 +25,7 @@ impl Windows {
 
     let mut app = App::new();
     app.add_module(WinitModule);
-    app.world.get_resource_mut::<Windows>().unwrap().spawn();
+    app.world.resources_write().get_mut::<Windows>().unwrap().spawn();
     ```
     */
     pub fn spawn(&mut self) {

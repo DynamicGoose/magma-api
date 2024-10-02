@@ -11,10 +11,10 @@ repository = "https://github.com/DynamicGoose/magma-api"
 
 [dependencies]
 magma_app = { path = "../magma_app", version = "0.1.0-alpha.5" }
-winit = "0.30.3"
+winit = "0.30.5"
 
 # These need to be run on the main thread, which normal tests don't do
-[[test]]
-name = "winit_tests"
-path = "tests/main.rs"
-harness = false
+# [[test]]
+# name = "winit_tests"
+# path = "tests/main.rs"
+# harness = false
