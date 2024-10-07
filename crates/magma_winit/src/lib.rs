@@ -1,5 +1,5 @@
 /*!
-This crates integrates [`winit`] into the Magma3D engine, in order to manage application windows.
+This crate integrates [`winit`] into the Magma API in order to manage application windows.
 Here is a basic usage example:
 ```
 use magma_app::{App, SystemType, World};
@@ -8,16 +8,17 @@ use magma_winit::{windows::Windows, WinitModule};
 let mut app = App::new();
 app.add_module(WinitModule);
 // spawn a window before running the app
-app.world.resources_write().get_mut::<Windows>().unwrap().spawn();
-app.add_systems(SystemType::Update, vec![open_windows]);
+app.world.resources_write().get_mut::<Windows>().unwrap().spawn(1);
+app.add_systems(SystemType::Update, vec![close_window]);
 app.run();
 
-// close the window, while the app is running
-fn open_windows(world: &World) {
+// close the window while the app is running
+fn close_window(world: &World) {
     let mut resources = world.resources_write();
     let window_resource = resources.get_mut::<Windows>().unwrap();
     window_resource.despawn(0);
-    println!("lel");
+    // We have to despawn two windows, because the WinitModule spawns one at startup.
+    window_resource.despawn(1);
 }
 ```
 */
@@ -37,20 +38,18 @@ pub use winit;
 pub mod windows;
 
 /**
-Adding the [`WinitModule`] to an [`App`] adds functionality for creating and managing windows. It also automatically adds one window on application start.
-```
-use magma_app::{App, SystemType, World};
-use magma_winit::{windows::Windows, WinitModule};
-
-let mut app = App::new();
-app.add_module(WinitModule);
-```
+Adding the [`WinitModule`] to an [`App`] adds functionality for creating and managing windows. It also automatically spawns one window on application start.
 */
 pub struct WinitModule;
 
 impl Module for WinitModule {
     fn setup(&self, app: &mut magma_app::App) {
         app.world.add_resource(Windows::new());
+        app.world
+            .resources_write()
+            .get_mut::<Windows>()
+            .unwrap()
+            .spawn(1);
         app.set_runner(winit_event_loop);
     }
 }
@@ -106,16 +105,18 @@ impl ApplicationHandler for WrappedApp {
         {
             let mut resources = self.app.world.resources_write();
             let windows = resources.get_mut::<Windows>().unwrap();
-            if windows.spawn {
-                let window = event_loop
-                    .create_window(Window::default_attributes())
-                    .unwrap();
-                if let Some(none) = windows.windows.iter_mut().find(|window| window.is_none()) {
-                    *none = Some(window);
-                } else {
-                    windows.windows.push(Some(window));
+            if windows.spawn > 0 {
+                for _ in 0..windows.spawn {
+                    let window = event_loop
+                        .create_window(Window::default_attributes())
+                        .unwrap();
+                    if let Some(none) = windows.windows.iter_mut().find(|window| window.is_none()) {
+                        *none = Some(window);
+                    } else {
+                        windows.windows.push(Some(window));
+                    }
                 }
-                windows.spawn = false;
+                windows.spawn = 0;
             }
         }
         if !update(&self.app) {

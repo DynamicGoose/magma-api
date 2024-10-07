@@ -6,32 +6,32 @@ pub struct Windows {
     pub windows: Vec<Option<winit::window::Window>>,
     pub window_events: Vec<WindowEvent>,
     pub device_events: Vec<DeviceEvent>,
-    pub(crate) spawn: bool,
+    pub(crate) spawn: u32,
 }
 
 impl Windows {
-    /// create a new instance of [`Windows`]
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             windows: vec![],
             window_events: vec![],
             device_events: vec![],
-            spawn: false,
+            spawn: 0,
         }
     }
     /**
-    Spawn a new window
+    Spawn a specified amount of windows
     ```
     use magma_app::App;
     use magma_winit::{WinitModule, windows::Windows};
 
     let mut app = App::new();
     app.add_module(WinitModule);
-    app.world.resources_write().get_mut::<Windows>().unwrap().spawn();
+    // spawn the window
+    app.world.resources_write().get_mut::<Windows>().unwrap().spawn(1);
     ```
     */
-    pub fn spawn(&mut self) {
-        self.spawn = true;
+    pub fn spawn(&mut self, num: u32) {
+        self.spawn += num;
     }
 
     /// Despawn the window at the given index

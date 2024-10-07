@@ -8,7 +8,7 @@ fn main() {
         .resources_write()
         .get_mut::<Windows>()
         .unwrap()
-        .spawn();
+        .spawn(1);
     app.add_systems(SystemType::Update, vec![open_windows, close_windows]);
     app.run();
 }
@@ -19,7 +19,7 @@ fn open_windows(world: &World) {
         .resources_write()
         .get_mut::<Windows>()
         .unwrap()
-        .spawn();
+        .spawn(1);
     println!("open_end")
 }
 
