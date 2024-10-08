@@ -40,7 +40,7 @@ pub use kira;
 /// Sounds resource
 pub mod sounds;
 
-/// Can be added to an [`App`](magma_app::App) for audio support
+/// Can be added to an [`App`] for audio support
 pub struct AudioModule;
 
 impl Module for AudioModule {
