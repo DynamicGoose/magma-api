@@ -14,19 +14,15 @@ fn main() {
 }
 
 fn open_windows(world: &World) {
-    println!("open");
-    world
-        .resources_write()
-        .get_mut::<Windows>()
-        .unwrap()
-        .spawn(1);
-    println!("open_end")
+    let mut resources = world.resources_write();
+    let window_resource = resources.get_mut::<Windows>().unwrap();
+    if window_resource.windows.len() < 4 {
+        window_resource.spawn(1);
+    }
 }
 
 fn close_windows(world: &World) {
-    println!("close");
     let mut resources = world.resources_write();
-    println!("write_close");
     let window_resource = resources.get_mut::<Windows>().unwrap();
     if window_resource.windows.len() == 4 {
         for i in 0..4 {
