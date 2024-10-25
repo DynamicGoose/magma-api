@@ -11,7 +11,7 @@ use magma_winit::WinitModule;
 pub struct DefaultModules;
 
 impl Module for DefaultModules {
-    fn setup(&self, app: &mut magma_app::App) {
+    fn setup(self, app: &mut magma_app::App) {
         app.add_module(WinitModule);
         app.add_module(AudioModule);
     }

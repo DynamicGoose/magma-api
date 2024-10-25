@@ -44,12 +44,14 @@ pub mod sounds;
 pub struct AudioModule;
 
 impl Module for AudioModule {
-    fn setup(&self, app: &mut App) {
-        app.world.add_resource(
-            AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).unwrap(),
-        );
+    fn setup(self, app: &mut App) {
+        app.world
+            .add_resource(
+                AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).unwrap(),
+            )
+            .unwrap();
         let sounds_resource: Sounds = vec![];
-        app.world.add_resource(sounds_resource);
+        app.world.add_resource(sounds_resource).unwrap();
     }
 }
 
@@ -65,10 +67,11 @@ mod tests {
         let mut app = App::new();
         app.add_module(AudioModule);
         app.world
-            .resources_write()
-            .get_mut::<AudioManager>()
-            .unwrap()
-            .play(StaticSoundData::from_file("sound.ogg").unwrap())
+            .resource_mut(|audio_manager: &mut AudioManager| {
+                audio_manager
+                    .play(StaticSoundData::from_file("sound.og").unwrap())
+                    .unwrap();
+            })
             .unwrap();
     }
 
@@ -76,17 +79,20 @@ mod tests {
     fn load_sound() {
         let mut app = App::new();
         app.add_module(AudioModule);
-        {
-            let mut resources = app.world.resources_write();
-            let sounds = resources.get_mut::<Sounds>().unwrap();
-            sounds.push(StaticSoundData::from_file("sound.ogg").unwrap());
-        }
-        let sound = app.world.resources_read().get_ref::<Sounds>().unwrap()[0].clone();
         app.world
-            .resources_write()
-            .get_mut::<AudioManager>()
-            .unwrap()
-            .play(sound)
+            .resource_mut(|sounds: &mut Sounds| {
+                sounds.push(StaticSoundData::from_file("sound.ogg").unwrap())
+            })
+            .unwrap();
+
+        app.world
+            .resource_ref(|sounds: &Sounds| {
+                app.world
+                    .resource_mut(|audio_manager: &mut AudioManager| {
+                        audio_manager.play(sounds[0].clone()).unwrap();
+                    })
+                    .unwrap()
+            })
             .unwrap();
     }
 }

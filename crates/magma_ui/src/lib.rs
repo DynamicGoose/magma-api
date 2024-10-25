@@ -15,8 +15,9 @@ pub use iced_winit;
 pub struct UIModule(pub fn(&World));
 
 impl Module for UIModule {
-    fn setup(&self, app: &mut magma_app::App) {
+    fn setup(self, app: &mut magma_app::App) {
         app.add_module(WinitModule);
-        app.add_systems(magma_app::SystemType::Update, vec![self.0]);
+        // fix
+        app.add_systems(magma_app::SystemType::Update, &[]);
     }
 }

@@ -5,28 +5,36 @@ fn main() {
     let mut app = App::new();
     app.add_module(WinitModule);
     app.world
-        .resources_write()
-        .get_mut::<Windows>()
-        .unwrap()
-        .spawn(1);
-    app.add_systems(SystemType::Update, vec![open_windows, close_windows]);
+        .resource_mut(|windows: &mut Windows| windows.spawn(1))
+        .unwrap();
+    app.add_systems(
+        SystemType::Update,
+        &[
+            (open_windows, "open_windows", &[]),
+            (close_windows, "close_windows", &[]),
+        ],
+    );
     app.run();
 }
 
 fn open_windows(world: &World) {
-    let mut resources = world.resources_write();
-    let window_resource = resources.get_mut::<Windows>().unwrap();
-    if window_resource.windows.len() < 4 {
-        window_resource.spawn(1);
-    }
+    world
+        .resource_mut(|windows: &mut Windows| {
+            if windows.windows.len() < 4 {
+                windows.spawn(1);
+            }
+        })
+        .unwrap();
 }
 
 fn close_windows(world: &World) {
-    let mut resources = world.resources_write();
-    let window_resource = resources.get_mut::<Windows>().unwrap();
-    if window_resource.windows.len() == 4 {
-        for i in 0..4 {
-            window_resource.despawn(i);
-        }
-    }
+    world
+        .resource_mut(|windows: &mut Windows| {
+            if windows.windows.len() == 4 {
+                for i in 0..4 {
+                    windows.despawn(i);
+                }
+            }
+        })
+        .unwrap();
 }

@@ -3,24 +3,26 @@ use magma_app::{App, SystemType, World};
 #[test]
 fn add_systems() {
     let mut app = App::new();
-    app.add_systems(SystemType::Startup, vec![system_startup]);
-    app.add_systems(SystemType::Update, vec![update_resource]);
+    app.world.register_component::<u32>();
+    app.add_systems(
+        SystemType::Startup,
+        &[(system_startup, "system_startup", &[])],
+    );
+    app.add_systems(
+        SystemType::Update,
+        &[(update_resource, "update_resource", &[])],
+    );
     app.set_runner(test_runner);
     app.run();
 }
 
 fn system_startup(world: &World) {
-    world.add_resource(0_u32);
-    world.register_component::<u32>();
-    world
-        .entities_write()
-        .create_entity()
-        .with_component(10_u32)
-        .unwrap();
+    world.add_resource(0_u32).unwrap();
+    world.create_entity().with_component(10_u32).unwrap();
 }
 
 fn update_resource(world: &World) {
-    *world.resources_write().get_mut::<u32>().unwrap() += 1;
+    world.resource_mut(|res: &mut u32| *res += 1).unwrap();
 }
 
 fn test_runner(app: App) {

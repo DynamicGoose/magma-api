@@ -4,21 +4,20 @@ A [`Module`] trait is also provided for implementing additional functionality.
 */
 use std::any::{Any, TypeId};
 
+use magma_ecs::systems::{dispatcher::Dispatcher, Systems};
 pub use magma_ecs::World;
 use module::Module;
 
 /// Support for adding [`Module`]s
 pub mod module;
 
-type Systems = Vec<fn(&World)>;
-
 /// The [`App`] struct holds all the apps data and defines the necessary functions and methods to operate on it.
 pub struct App {
     pub world: World,
     runner: fn(App),
     modules: Vec<TypeId>,
-    startup_systems: Systems,
-    update_systems: Systems,
+    startup_systems: (Systems, Dispatcher),
+    update_systems: (Systems, Dispatcher),
 }
 
 impl Default for App {
@@ -50,7 +49,7 @@ impl App {
     struct ExampleModule;
 
     impl Module for ExampleModule {
-        fn setup(&self, app: &mut App) {
+        fn setup(self, app: &mut App) {
             // Setup the module
             // E.g. register components to the World or add resources
         }
@@ -71,17 +70,31 @@ impl App {
     use magma_app::{App, SystemType, World};
 
     let mut app = App::new();
-    app.add_systems(SystemType::Startup, vec![example_system]);
+    app.add_systems(SystemType::Startup, &[(example_system, "example_system", &[])]);
 
     fn example_system(_world: &World) {
         // E.g. change something in the World
     }
     ```
     */
-    pub fn add_systems(&mut self, systemtype: SystemType, mut systems: Systems) {
+    pub fn add_systems(
+        &mut self,
+        systemtype: SystemType,
+        systems: &'static [(fn(&World), &'static str, &'static [&'static str])],
+    ) {
         match systemtype {
-            SystemType::Startup => self.startup_systems.append(&mut systems),
-            SystemType::Update => self.update_systems.append(&mut systems),
+            SystemType::Startup => {
+                for system in systems {
+                    self.startup_systems.0.add(system.0, system.1, system.2);
+                    self.startup_systems.1 = self.startup_systems.0.to_owned().build_dispatcher();
+                }
+            }
+            SystemType::Update => {
+                for system in systems {
+                    self.update_systems.0.add(system.0, system.1, system.2);
+                    self.update_systems.1 = self.update_systems.0.to_owned().build_dispatcher();
+                }
+            }
         }
     }
 
@@ -92,12 +105,12 @@ impl App {
 
     /// update the [`App`] once
     pub fn update(&self) {
-        self.world.update(&self.update_systems);
+        self.update_systems.1.dispatch(&self.world);
     }
 
     /// Run the Application
     pub fn run(self) {
-        self.world.update(&self.startup_systems);
+        self.startup_systems.1.dispatch(&self.world);
         (self.runner)(self);
     }
 }

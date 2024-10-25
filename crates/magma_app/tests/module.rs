@@ -10,12 +10,17 @@ fn add_module() {
 pub struct TestModule;
 
 impl Module for TestModule {
-    fn setup(&self, app: &mut magma_app::App) {
-        app.add_systems(magma_app::SystemType::Startup, vec![test_system]);
+    fn setup(self, app: &mut magma_app::App) {
+        app.add_systems(
+            magma_app::SystemType::Startup,
+            &[(test_system, "test_system", &[])],
+        );
     }
 }
 
 fn test_system(world: &World) {
-    world.add_resource(10_u32);
-    assert_eq!(*world.resources_read().get_ref::<u32>().unwrap(), 10);
+    world.add_resource(10_u32).unwrap();
+    world
+        .resource_ref(|res: &u32| assert_eq!(*res, 10))
+        .unwrap();
 }
