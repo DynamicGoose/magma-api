@@ -8,17 +8,18 @@ use magma_winit::{windows::Windows, WinitModule};
 let mut app = App::new();
 app.add_module(WinitModule);
 // spawn a window before running the app
-app.world.resources_write().get_mut::<Windows>().unwrap().spawn(1);
-app.add_systems(SystemType::Update, vec![close_window]);
+app.world
+    .resource_mut(|windows: &mut Windows| windows.spawn(1))
+    .unwrap();
+app.add_systems(SystemType::Update, &[(close_window, "close_window", &[])]);
 app.run();
 
 // close the window while the app is running
 fn close_window(world: &World) {
-    let mut resources = world.resources_write();
-    let window_resource = resources.get_mut::<Windows>().unwrap();
-    window_resource.despawn(0);
-    // We have to despawn two windows, because the WinitModule spawns one at startup.
-    window_resource.despawn(1);
+    world.resource_mut(|windows: &mut Windows| {
+        windows.despawn(0);
+        windows.despawn(1);
+    }).unwrap();
 }
 ```
 */

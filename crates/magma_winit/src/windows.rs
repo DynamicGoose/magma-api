@@ -27,7 +27,9 @@ impl Windows {
     let mut app = App::new();
     app.add_module(WinitModule);
     // spawn the window
-    app.world.resources_write().get_mut::<Windows>().unwrap().spawn(1);
+    app.world
+        .resource_mut(|windows: &mut Windows| windows.spawn(1))
+        .unwrap();
     ```
     */
     pub fn spawn(&mut self, num: u32) {
