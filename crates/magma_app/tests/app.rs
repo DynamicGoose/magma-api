@@ -1,9 +1,16 @@
+use std::time::Instant;
+
 use magma_app::{App, SystemType, World};
 
 #[test]
 fn add_systems() {
     let mut app = App::new();
     app.world.register_component::<u32>();
+    app.world.register_component::<Transform>();
+    app.world.register_component::<Position>();
+    app.world.register_component::<Rotation>();
+    app.world.register_component::<Velocity>();
+
     app.add_systems(
         SystemType::Startup,
         &[(system_startup, "system_startup", &[])],
@@ -18,7 +25,26 @@ fn add_systems() {
 
 fn system_startup(world: &World) {
     world.add_resource(0_u32).unwrap();
-    world.create_entity().with_component(10_u32).unwrap();
+
+    let time = Instant::now();
+    world
+        .create_entity_batch(
+            (
+                Transform([
+                    [10, 10, 10, 10],
+                    [10, 10, 10, 10],
+                    [10, 10, 10, 10],
+                    [10, 10, 10, 10],
+                ]),
+                Position((10, 10, 10)),
+                Rotation((10, 10, 10)),
+                Velocity((10, 10, 10)),
+            ),
+            10000,
+        )
+        .unwrap();
+    let elapsed = time.elapsed();
+    println!("{}", elapsed.as_micros());
 }
 
 fn update_resource(world: &World) {
@@ -30,3 +56,12 @@ fn test_runner(app: App) {
         app.update();
     }
 }
+
+#[allow(dead_code)]
+struct Transform([[i32; 4]; 4]);
+#[allow(dead_code)]
+struct Position((i32, i32, i32));
+#[allow(dead_code)]
+struct Rotation((i32, i32, i32));
+#[allow(dead_code)]
+struct Velocity((i32, i32, i32));

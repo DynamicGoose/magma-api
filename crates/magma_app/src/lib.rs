@@ -11,6 +11,8 @@ use module::Module;
 /// Support for adding [`Module`]s
 pub mod module;
 
+type SystemTuple = &'static [(fn(&World), &'static str, &'static [&'static str])];
+
 /// The [`App`] struct holds all the apps data and defines the necessary functions and methods to operate on it.
 pub struct App {
     pub world: World,
@@ -77,11 +79,7 @@ impl App {
     }
     ```
     */
-    pub fn add_systems(
-        &mut self,
-        systemtype: SystemType,
-        systems: &'static [(fn(&World), &'static str, &'static [&'static str])],
-    ) {
+    pub fn add_systems(&mut self, systemtype: SystemType, systems: SystemTuple) {
         match systemtype {
             SystemType::Startup => {
                 for system in systems {
