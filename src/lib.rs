@@ -2,6 +2,7 @@
 pub use magma_app;
 pub use magma_audio;
 pub use magma_ui;
+pub use magma_window;
 pub use magma_winit;
 
 use magma_app::module::Module;

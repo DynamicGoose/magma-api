@@ -1,0 +1,11 @@
+[package]
+name = "magma_window"
+version = "0.1.0-alpha.1"
+edition = "2021"
+description = "Part of the Magma-API, which is the API of the Magma3D game engine. This is the Window component."
+homepage = "https://dynamicgoose.github.io/magma3d-engine/"
+license = "MIT"
+repository = "https://github.com/DynamicGoose/magma-api"
+
+[dependencies]
+magma_app = { path = "../magma_app", version = "0.1.0-alpha.5" }
