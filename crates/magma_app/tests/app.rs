@@ -11,6 +11,8 @@ fn add_systems() {
     app.world.register_component::<Rotation>();
     app.world.register_component::<Velocity>();
 
+    app.world.add_resource(10_u32).unwrap();
+
     app.add_systems(
         SystemType::Startup,
         &[(system_startup, "system_startup", &[])],
@@ -24,12 +26,11 @@ fn add_systems() {
 }
 
 fn system_startup(world: &World) {
-    world.add_resource(0_u32).unwrap();
-
     let time = Instant::now();
-    world
-        .create_entity_batch(
-            (
+
+    for _ in 0..1000 {
+        world
+            .create_entity((
                 Transform([
                     [10, 10, 10, 10],
                     [10, 10, 10, 10],
@@ -39,16 +40,16 @@ fn system_startup(world: &World) {
                 Position((10, 10, 10)),
                 Rotation((10, 10, 10)),
                 Velocity((10, 10, 10)),
-            ),
-            10000,
-        )
-        .unwrap();
+            ))
+            .unwrap();
+    }
     let elapsed = time.elapsed();
     println!("{}", elapsed.as_micros());
 }
 
 fn update_resource(world: &World) {
-    world.resource_mut(|res: &mut u32| *res += 1).unwrap();
+    let mut res = world.get_resource_mut::<u32>().unwrap();
+    *res += 1;
 }
 
 fn test_runner(app: App) {

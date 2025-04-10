@@ -4,8 +4,8 @@ A [`Module`] trait is also provided for implementing additional functionality.
 */
 use std::any::{Any, TypeId};
 
-use magma_ecs::systems::{dispatcher::Dispatcher, Systems};
 pub use magma_ecs::World;
+use magma_ecs::systems::{Systems, dispatcher::Dispatcher};
 use module::Module;
 
 /// Support for adding [`Module`]s
@@ -41,7 +41,10 @@ impl App {
     }
 
     /**
-    Add a [`Module`] to the [`App`].
+    Add a [`Module`] to the [`App`]. If it already exists, nothing happens.
+
+    # Example
+
     ```
     use magma_app::{module::Module, App};
 
@@ -67,7 +70,10 @@ impl App {
     }
 
     /**
-    Add systems to the [`App`]'s [`World`]. Systems must take either an immutable or a mutable reference to [`World`].
+    Add systems to the [`App`]'s [`World`]. Systems must take an immutable reference to [`World`].
+
+    # Example
+
     ```
     use magma_app::{App, SystemType, World};
 

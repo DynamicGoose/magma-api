@@ -11,6 +11,7 @@ pub struct TestModule;
 
 impl Module for TestModule {
     fn setup(self, app: &mut magma_app::App) {
+        app.world.add_resource(10_u32).unwrap();
         app.add_systems(
             magma_app::SystemType::Startup,
             &[(test_system, "test_system", &[])],
@@ -19,8 +20,5 @@ impl Module for TestModule {
 }
 
 fn test_system(world: &World) {
-    world.add_resource(10_u32).unwrap();
-    world
-        .resource_ref(|res: &u32| assert_eq!(*res, 10))
-        .unwrap();
+    assert_eq!(*world.get_resource::<u32>().unwrap(), 10)
 }
