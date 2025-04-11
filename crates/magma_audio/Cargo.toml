@@ -11,4 +11,4 @@ repository = "https://github.com/DynamicGoose/magma-api"
 
 [dependencies]
 kira = "0.9.3"
-magma_app = { path = "../magma_app", version = "0.1.0-alpha.6" }
+magma_app = { path = "../magma_app", version = "0.2.0-alpha" }
