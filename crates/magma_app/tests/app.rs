@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use magma_app::{App, SystemType, World};
+use magma_app::{App, SystemType, World, events::Events};
 
 #[test]
 fn add_systems() {
@@ -21,6 +21,20 @@ fn add_systems() {
         SystemType::Update,
         &[(update_resource, "update_resource", &[])],
     );
+    app.set_runner(test_runner);
+    app.run();
+}
+
+#[test]
+fn event_systems() {
+    let mut app = App::new();
+    app.register_event::<Event>();
+    app.add_event_systems::<Event>(&[(update_resource, "update_resource", &[])])
+        .unwrap();
+    app.world.add_resource(10_u32).unwrap();
+
+    app.add_systems(SystemType::Update, &[(event_system, "event_system", &[])]);
+
     app.set_runner(test_runner);
     app.run();
 }
@@ -52,10 +66,19 @@ fn update_resource(world: &World) {
     *res += 1;
 }
 
+fn event_system(world: &World) {
+    world
+        .get_resource_mut::<Events>()
+        .unwrap()
+        .push_event(Event)
+        .unwrap();
+}
+
 fn test_runner(app: App) {
     for _ in 0..10 {
         app.update();
     }
+    assert_eq!(20, *app.world.get_resource::<u32>().unwrap());
 }
 
 #[allow(dead_code)]
@@ -66,3 +89,5 @@ struct Position((i32, i32, i32));
 struct Rotation((i32, i32, i32));
 #[allow(dead_code)]
 struct Velocity((i32, i32, i32));
+
+struct Event;
