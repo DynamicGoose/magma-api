@@ -2,16 +2,26 @@
 This crate provides basic functionality for creating and running an [`App`].
 A [`Module`] trait is also provided for implementing additional functionality.
 */
-use std::any::{Any, TypeId};
+use std::{
+    any::{Any, TypeId},
+    collections::HashMap,
+};
 
+use error::EventError;
+use events::Events;
 pub use magma_ecs::World;
-use magma_ecs::systems::{Systems, dispatcher::Dispatcher};
+use magma_ecs::{
+    rayon::iter::{IntoParallelRefIterator, ParallelIterator},
+    systems::{Systems, dispatcher::Dispatcher},
+};
 use module::Module;
 
+pub mod error;
+pub mod events;
 /// Support for adding [`Module`]s
 pub mod module;
 
-type SystemTuple = &'static [(fn(&World), &'static str, &'static [&'static str])];
+type SystemSlice = &'static [(fn(&World), &'static str, &'static [&'static str])];
 
 /// The [`App`] struct holds all the apps data and defines the necessary functions and methods to operate on it.
 pub struct App {
@@ -20,17 +30,22 @@ pub struct App {
     modules: Vec<TypeId>,
     startup_systems: (Systems, Dispatcher),
     update_systems: (Systems, Dispatcher),
+    event_systems: HashMap<TypeId, (Systems, Dispatcher)>,
 }
 
 impl Default for App {
     fn default() -> Self {
-        Self {
+        let mut app = Self {
             world: Default::default(),
             runner: default_runner,
             modules: vec![],
             startup_systems: Default::default(),
             update_systems: Default::default(),
-        }
+            event_systems: Default::default(),
+        };
+
+        app.world.add_resource(Events::default()).unwrap();
+        app
     }
 }
 
@@ -85,21 +100,46 @@ impl App {
     }
     ```
     */
-    pub fn add_systems(&mut self, systemtype: SystemType, systems: SystemTuple) {
+    pub fn add_systems(&mut self, systemtype: SystemType, systems: SystemSlice) {
         match systemtype {
             SystemType::Startup => {
-                for system in systems {
-                    self.startup_systems.0.add(system.0, system.1, system.2);
-                    self.startup_systems.1 = self.startup_systems.0.to_owned().build_dispatcher();
+                for (run, name, deps) in systems {
+                    self.startup_systems.0.add(*run, name, deps);
                 }
+                self.startup_systems.1 = self.startup_systems.0.to_owned().build_dispatcher();
             }
             SystemType::Update => {
-                for system in systems {
-                    self.update_systems.0.add(system.0, system.1, system.2);
-                    self.update_systems.1 = self.update_systems.0.to_owned().build_dispatcher();
+                for (run, name, deps) in systems {
+                    self.update_systems.0.add(*run, name, deps);
                 }
+                self.update_systems.1 = self.update_systems.0.to_owned().build_dispatcher();
             }
         }
+    }
+
+    pub fn register_event<E: Any + Send + Sync>(&mut self) {
+        self.world
+            .get_resource_mut::<Events>()
+            .unwrap()
+            .0
+            .insert(TypeId::of::<E>(), vec![]);
+        self.event_systems
+            .insert(TypeId::of::<E>(), (Systems::new(), Dispatcher::default()));
+    }
+
+    pub fn add_event_systems<E: Any + Send + Sync>(
+        &mut self,
+        systems: SystemSlice,
+    ) -> Result<(), EventError> {
+        let event_systems = self
+            .event_systems
+            .get_mut(&TypeId::of::<E>())
+            .ok_or(EventError::EventNotRegistered)?;
+        for (run, name, deps) in systems {
+            event_systems.0.add(*run, name, deps);
+        }
+        event_systems.1 = event_systems.0.to_owned().build_dispatcher();
+        Ok(())
     }
 
     /// Set the runner of the [`App`]
@@ -110,6 +150,37 @@ impl App {
     /// update the [`App`] once
     pub fn update(&self) {
         self.update_systems.1.dispatch(&self.world);
+
+        // get which events occured
+        let events = self
+            .world
+            .get_resource::<Events>()
+            .unwrap()
+            .0
+            .par_iter()
+            .filter_map(|(type_id, events)| {
+                if !events.is_empty() {
+                    Some(*type_id)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        // dispatch systems for events
+        events.par_iter().for_each(|type_id| {
+            self.event_systems
+                .get(type_id)
+                .unwrap()
+                .1
+                .dispatch(&self.world);
+        });
+
+        // clear events
+        self.world
+            .get_resource_mut::<Events>()
+            .unwrap()
+            .clear_events();
     }
 
     /// Run the Application

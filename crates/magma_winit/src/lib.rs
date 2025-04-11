@@ -1,6 +1,8 @@
 /*!
 This crate integrates [`winit`] into the Magma API in order to manage application windows.
-Here is a basic usage example:
+
+# Example
+
 ```
 use magma_app::{App, SystemType, World};
 use magma_winit::{windows::Windows, WinitModule};
@@ -9,22 +11,20 @@ let mut app = App::new();
 app.add_module(WinitModule);
 // spawn a window before running the app
 app.world
-    .resource_mut(|windows: &mut Windows| windows.spawn(1))
-    .unwrap();
+    .get_resource_mut::<Windows>().unwrap().spawn(1);
 app.add_systems(SystemType::Update, &[(close_window, "close_window", &[])]);
 app.run();
 
 // close the window while the app is running
 fn close_window(world: &World) {
-    world.resource_mut(|windows: &mut Windows| {
-        windows.despawn(0);
-        windows.despawn(1);
-    }).unwrap();
+    let mut windows = world.get_resource_mut::<Windows>().unwrap();
+    windows.despawn(0);
+    windows.despawn(1);
 }
 ```
 */
 
-use magma_app::{module::Module, App};
+use magma_app::{App, module::Module};
 use windows::Windows;
 use winit::{
     application::ApplicationHandler,
@@ -46,9 +46,7 @@ pub struct WinitModule;
 impl Module for WinitModule {
     fn setup(self, app: &mut magma_app::App) {
         app.world.add_resource(Windows::new()).unwrap();
-        app.world
-            .resource_mut(|windows: &mut Windows| windows.spawn(1))
-            .unwrap();
+        app.world.get_resource_mut::<Windows>().unwrap().spawn(1);
         app.set_runner(winit_event_loop);
     }
 }
@@ -68,25 +66,23 @@ impl ApplicationHandler for WrappedApp {
     ) {
         match event {
             WindowEvent::CloseRequested => {
-                self.app
-                    .world
-                    .resource_mut(|windows: &mut Windows| {
-                        let index = windows.windows.iter().position(|window| {
-                            window
-                                .as_ref()
-                                .is_some_and(|window| window.id() == window_id)
-                        });
-                        if let Some(index) = index {
-                            windows.despawn(index);
-                        }
-                    })
-                    .unwrap();
+                let mut windows = self.app.world.get_resource_mut::<Windows>().unwrap();
+                let index = windows.windows.iter().position(|window| {
+                    window
+                        .as_ref()
+                        .is_some_and(|window| window.id() == window_id)
+                });
+                if let Some(index) = index {
+                    windows.despawn(index);
+                }
             }
             _ => {
                 self.app
                     .world
-                    .resource_mut(|windows: &mut Windows| windows.window_events.push(event))
-                    .unwrap();
+                    .get_resource_mut::<Windows>()
+                    .unwrap()
+                    .window_events
+                    .push(event);
             }
         }
     }
@@ -99,43 +95,33 @@ impl ApplicationHandler for WrappedApp {
     ) {
         self.app
             .world
-            .resource_mut(|windows: &mut Windows| windows.device_events.push(event))
-            .unwrap();
+            .get_resource_mut::<Windows>()
+            .unwrap()
+            .device_events
+            .push(event);
     }
 
     fn about_to_wait(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         {
-            self.app
-                .world
-                .resource_mut(|windows: &mut Windows| {
-                    if windows.spawn > 0 {
-                        for _ in 0..windows.spawn {
-                            let window = event_loop
-                                .create_window(Window::default_attributes())
-                                .unwrap();
-                            if let Some(none) =
-                                windows.windows.iter_mut().find(|window| window.is_none())
-                            {
-                                *none = Some(window);
-                            } else {
-                                windows.windows.push(Some(window));
-                            }
-                        }
-                        windows.spawn = 0;
-                    }
-                })
-                .unwrap();
+            let mut windows = self.app.world.get_resource_mut::<Windows>().unwrap();
+            for _ in 0..windows.spawn {
+                let window = event_loop
+                    .create_window(Window::default_attributes())
+                    .unwrap();
+                if let Some(none) = windows.windows.iter_mut().find(|w| w.is_none()) {
+                    *none = Some(window);
+                } else {
+                    windows.windows.push(Some(window));
+                }
+            }
+            windows.spawn = 0;
         }
         if !update(&self.app) {
             event_loop.exit();
         }
-        self.app
-            .world
-            .resource_mut(|windows: &mut Windows| {
-                windows.window_events = vec![];
-                windows.device_events = vec![];
-            })
-            .unwrap();
+        let mut windows = self.app.world.get_resource_mut::<Windows>().unwrap();
+        windows.window_events = vec![];
+        windows.device_events = vec![];
     }
 }
 
@@ -147,20 +133,18 @@ fn winit_event_loop(app: App) {
 }
 
 fn update(app: &App) -> bool {
-    let mut result = true;
-    app.world
-        .resource_ref(|windows: &Windows| {
-            if windows
-                .windows
-                .iter()
-                .filter(|window| window.is_some())
-                .collect::<Vec<_>>()
-                .is_empty()
-            {
-                result = false;
-            }
-        })
-        .unwrap();
+    if app
+        .world
+        .get_resource::<Windows>()
+        .unwrap()
+        .windows
+        .iter()
+        .filter(|w| w.is_some())
+        .collect::<Vec<_>>()
+        .is_empty()
+    {
+        return false;
+    }
     app.update();
-    result
+    true
 }

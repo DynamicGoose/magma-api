@@ -28,8 +28,7 @@ impl Windows {
     app.add_module(WinitModule);
     // spawn the window
     app.world
-        .resource_mut(|windows: &mut Windows| windows.spawn(1))
-        .unwrap();
+        .get_resource_mut::<Windows>().unwrap().spawn(1);
     ```
     */
     pub fn spawn(&mut self, num: u32) {

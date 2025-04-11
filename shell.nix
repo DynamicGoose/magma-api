@@ -1,4 +1,4 @@
-{ pkgs ? import <nixpkgs> { } }:
+{ pkgs ? import <nixpkgs> {} }:
 let
   libPath = with pkgs; lib.makeLibraryPath [
     libGL
@@ -12,7 +12,17 @@ let
   ];
 in
 with pkgs; mkShell {
-  inputsFrom = [ ];
-  buildInputs = [ rustup pkg-config alsa-lib ];
+  nativeBuildInputs = with pkgs; [
+    rustc
+    cargo
+    gcc
+    rust-analyzer
+    rustfmt
+    clippy
+  ];
+
+  buildInputs = [pkgs.pkg-config];
+
   LD_LIBRARY_PATH = "${libPath}";
+  RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
 }
