@@ -9,12 +9,13 @@ use std::{
 
 use error::EventError;
 use events::Events;
-pub use magma_ecs::World;
 use magma_ecs::{
     rayon::iter::{IntoParallelRefIterator, ParallelIterator},
     systems::{Systems, dispatcher::Dispatcher},
 };
 use module::Module;
+
+pub use magma_ecs::*;
 
 pub mod error;
 pub mod events;

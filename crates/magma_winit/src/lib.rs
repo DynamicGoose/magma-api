@@ -24,13 +24,14 @@ fn close_window(world: &World) {
 ```
 */
 
-use magma_app::{App, module::Module};
+use magma_app::{App, events::Events, module::Module};
+use magma_window::Window;
 use windows::Windows;
+use winit::window::Window as WinitWindow;
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
     event_loop::{ControlFlow, EventLoop},
-    window::Window,
 };
 
 pub use winit;
@@ -45,14 +46,15 @@ pub struct WinitModule;
 
 impl Module for WinitModule {
     fn setup(self, app: &mut magma_app::App) {
-        app.world.add_resource(Windows::new()).unwrap();
-        app.world.get_resource_mut::<Windows>().unwrap().spawn(1);
         app.set_runner(winit_event_loop);
+        app.register_event::<winit::event::DeviceEvent>();
+        app.register_event::<winit::event::WindowEvent>();
     }
 }
 
 struct WrappedApp {
     app: App,
+    windows: Windows,
 }
 
 impl ApplicationHandler for WrappedApp {
@@ -66,23 +68,23 @@ impl ApplicationHandler for WrappedApp {
     ) {
         match event {
             WindowEvent::CloseRequested => {
-                let mut windows = self.app.world.get_resource_mut::<Windows>().unwrap();
-                let index = windows.windows.iter().position(|window| {
-                    window
-                        .as_ref()
-                        .is_some_and(|window| window.id() == window_id)
-                });
-                if let Some(index) = index {
-                    windows.despawn(index);
-                }
+                // let mut windows = self.app.world.get_resource_mut::<Windows>().unwrap();
+                // let index = windows.windows.iter().position(|window| {
+                //     window
+                //         .as_ref()
+                //         .is_some_and(|window| window.id() == window_id)
+                // });
+                // if let Some(index) = index {
+                //     windows.despawn(index);
+                // }
             }
             _ => {
                 self.app
                     .world
-                    .get_resource_mut::<Windows>()
+                    .get_resource_mut::<Events>()
                     .unwrap()
-                    .window_events
-                    .push(event);
+                    .push_event(event)
+                    .unwrap();
             }
         }
     }
@@ -95,56 +97,43 @@ impl ApplicationHandler for WrappedApp {
     ) {
         self.app
             .world
-            .get_resource_mut::<Windows>()
+            .get_resource_mut::<Events>()
             .unwrap()
-            .device_events
-            .push(event);
+            .push_event(event)
+            .unwrap();
     }
 
     fn about_to_wait(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        {
-            let mut windows = self.app.world.get_resource_mut::<Windows>().unwrap();
-            for _ in 0..windows.spawn {
-                let window = event_loop
-                    .create_window(Window::default_attributes())
-                    .unwrap();
-                if let Some(none) = windows.windows.iter_mut().find(|w| w.is_none()) {
-                    *none = Some(window);
-                } else {
-                    windows.windows.push(Some(window));
+        self.app.update();
+        self.app
+            .world
+            .query::<(Window,)>()
+            .unwrap()
+            .iter()
+            .for_each(|window_entity| {
+                let mut window_component = window_entity.get_component_mut::<Window>().unwrap();
+                if !window_component.has_winit_window() {
+                    let window = event_loop
+                        .create_window(WinitWindow::default_attributes())
+                        .unwrap();
+                    let window_id = window.id();
+
+                    self.windows.winit_windows.insert(window_id, window);
+                    self.windows
+                        .window_to_entity
+                        .insert(window_id, window_entity.id());
+                    window_component.winit_window = true;
                 }
-            }
-            windows.spawn = 0;
-        }
-        if !update(&self.app) {
-            event_loop.exit();
-        }
-        let mut windows = self.app.world.get_resource_mut::<Windows>().unwrap();
-        windows.window_events = vec![];
-        windows.device_events = vec![];
+            });
     }
 }
 
 fn winit_event_loop(app: App) {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
-    let mut app = WrappedApp { app };
+    let mut app = WrappedApp {
+        app,
+        windows: Windows::new(),
+    };
     event_loop.run_app(&mut app).unwrap();
-}
-
-fn update(app: &App) -> bool {
-    if app
-        .world
-        .get_resource::<Windows>()
-        .unwrap()
-        .windows
-        .iter()
-        .filter(|w| w.is_some())
-        .collect::<Vec<_>>()
-        .is_empty()
-    {
-        return false;
-    }
-    app.update();
-    true
 }
