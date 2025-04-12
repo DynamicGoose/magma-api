@@ -1,9 +1,29 @@
-pub struct Window {
-    pub winit_window: bool,
-}
+use magma_app::{App, module::Module};
+pub use window::Window;
+use window_event::*;
 
-impl Window {
-    pub const fn has_winit_window(&self) -> bool {
-        self.winit_window
+pub mod window;
+pub mod window_event;
+
+pub struct WindowModule;
+
+impl Module for WindowModule {
+    fn setup(self, app: &mut App) {
+        app.world.register_component::<Window>();
+
+        app.register_event::<WindowResized>();
+        app.register_event::<RequestRedraw>();
+        app.register_event::<WindowCreated>();
+        app.register_event::<WindowCloseRequested>();
+        app.register_event::<WindowClosed>();
+        app.register_event::<WindowDestroyed>();
+        app.register_event::<CursorMoved>();
+        app.register_event::<CursorEntered>();
+        app.register_event::<CursorLeft>();
+        app.register_event::<WindowFocused>();
+        app.register_event::<WindowOcclusion>();
+        app.register_event::<FileDragDrop>();
+        app.register_event::<WindowMoved>();
+        app.register_event::<WindowThemeChanged>();
     }
 }

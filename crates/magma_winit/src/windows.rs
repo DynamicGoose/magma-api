@@ -7,6 +7,7 @@ use winit::window::{Window as WinitWindow, WindowId};
 #[derive(Default)]
 pub(crate) struct Windows {
     pub window_to_entity: HashMap<WindowId, usize>,
+    pub entity_to_window: HashMap<usize, WindowId>,
     pub winit_windows: HashMap<WindowId, WinitWindow>,
 }
 

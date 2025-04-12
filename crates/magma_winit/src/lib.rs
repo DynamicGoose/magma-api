@@ -25,9 +25,9 @@ fn close_window(world: &World) {
 */
 
 use magma_app::{App, events::Events, module::Module};
-use magma_window::Window;
+use magma_window::{Window, WindowModule};
 use windows::Windows;
-use winit::window::Window as WinitWindow;
+use winit::window::{Window as WinitWindow, WindowId};
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
@@ -47,8 +47,7 @@ pub struct WinitModule;
 impl Module for WinitModule {
     fn setup(self, app: &mut magma_app::App) {
         app.set_runner(winit_event_loop);
-        app.register_event::<winit::event::DeviceEvent>();
-        app.register_event::<winit::event::WindowEvent>();
+        app.add_module(WindowModule);
     }
 }
 
@@ -104,7 +103,9 @@ impl ApplicationHandler for WrappedApp {
     }
 
     fn about_to_wait(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        // update the app
         self.app.update();
+        // create winit windows for new window components
         self.app
             .world
             .query::<(Window,)>()
@@ -112,7 +113,7 @@ impl ApplicationHandler for WrappedApp {
             .iter()
             .for_each(|window_entity| {
                 let mut window_component = window_entity.get_component_mut::<Window>().unwrap();
-                if !window_component.has_winit_window() {
+                if !window_component.has_window {
                     let window = event_loop
                         .create_window(WinitWindow::default_attributes())
                         .unwrap();
@@ -122,7 +123,22 @@ impl ApplicationHandler for WrappedApp {
                     self.windows
                         .window_to_entity
                         .insert(window_id, window_entity.id());
-                    window_component.winit_window = true;
+                    self.windows
+                        .entity_to_window
+                        .insert(window_entity.id(), window_id);
+                    window_component.has_window = true;
+                } else {
+                    let winit_window = self
+                        .windows
+                        .winit_windows
+                        .get(
+                            &self
+                                .windows
+                                .entity_to_window
+                                .get(&window_entity.id())
+                                .unwrap(),
+                        )
+                        .unwrap();
                 }
             });
     }
