@@ -27,7 +27,7 @@ fn close_window(world: &World) {
 use magma_app::{App, events::Events, module::Module};
 use magma_window::{Window, WindowModule};
 use windows::Windows;
-use winit::window::{Window as WinitWindow, WindowId};
+use winit::window::Window as WinitWindow;
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
@@ -47,6 +47,7 @@ pub struct WinitModule;
 impl Module for WinitModule {
     fn setup(self, app: &mut magma_app::App) {
         app.set_runner(winit_event_loop);
+        app.world.add_resource(Windows::new()).unwrap();
         app.add_module(WindowModule);
     }
 }
