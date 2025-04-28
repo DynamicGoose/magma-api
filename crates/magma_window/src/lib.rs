@@ -25,5 +25,8 @@ impl Module for WindowModule {
         app.register_event::<FileDragDrop>();
         app.register_event::<WindowMoved>();
         app.register_event::<WindowThemeChanged>();
+
+        // internal event for updating windows from their components
+        app.register_event::<WindowAttributesChanged>();
     }
 }
