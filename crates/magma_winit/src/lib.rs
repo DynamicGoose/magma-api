@@ -25,8 +25,12 @@ fn close_window(world: &World) {
 */
 
 use magma_app::{App, events::Events, module::Module};
+use magma_math::IVec2;
+use magma_window::window::WindowTheme;
+use magma_window::window_event::*;
 use magma_window::{Window, WindowModule};
 use windows::Windows;
+use winit::event::Event;
 use winit::window::Window as WinitWindow;
 use winit::{
     application::ApplicationHandler,
@@ -47,7 +51,6 @@ pub struct WinitModule;
 impl Module for WinitModule {
     fn setup(self, app: &mut magma_app::App) {
         app.set_runner(winit_event_loop);
-        app.world.add_resource(Windows::new()).unwrap();
         app.add_module(WindowModule);
     }
 }
@@ -67,41 +70,163 @@ impl ApplicationHandler for WrappedApp {
         event: WindowEvent,
     ) {
         match event {
-            WindowEvent::CloseRequested => {
-                // let mut windows = self.app.world.get_resource_mut::<Windows>().unwrap();
-                // let index = windows.windows.iter().position(|window| {
-                //     window
-                //         .as_ref()
-                //         .is_some_and(|window| window.id() == window_id)
-                // });
-                // if let Some(index) = index {
-                //     windows.despawn(index);
-                // }
-            }
-            _ => {
-                self.app
-                    .world
-                    .get_resource_mut::<Events>()
-                    .unwrap()
-                    .push_event(event)
-                    .unwrap();
-            }
+            WindowEvent::Resized(physical_size) => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(WindowResized {
+                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                    width: physical_size.width,
+                    height: physical_size.height,
+                })
+                .unwrap(),
+            WindowEvent::Moved(physical_position) => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(WindowMoved {
+                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                    position: IVec2 {
+                        x: physical_position.x,
+                        y: physical_position.y,
+                    },
+                })
+                .unwrap(),
+            WindowEvent::CloseRequested => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(WindowCloseRequested {
+                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                })
+                .unwrap(),
+            WindowEvent::Destroyed => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(WindowDestroyed {
+                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                })
+                .unwrap(),
+            WindowEvent::DroppedFile(path_buf) => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(FileDragDrop::Dropped {
+                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                    path: path_buf,
+                })
+                .unwrap(),
+            WindowEvent::HoveredFile(path_buf) => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(FileDragDrop::Hovered {
+                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                    path: path_buf,
+                })
+                .unwrap(),
+            WindowEvent::HoveredFileCancelled => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(FileDragDrop::HoverCanceled {
+                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                })
+                .unwrap(),
+            WindowEvent::Focused(_) => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(WindowFocused {
+                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                })
+                .unwrap(),
+            WindowEvent::CursorMoved { position, .. } => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(CursorMoved {
+                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                    position: IVec2 {
+                        x: position.x as i32,
+                        y: position.y as i32,
+                    },
+                })
+                .unwrap(),
+            WindowEvent::CursorEntered { .. } => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(CursorEntered {
+                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                })
+                .unwrap(),
+            WindowEvent::CursorLeft { .. } => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(CursorLeft {
+                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                })
+                .unwrap(),
+            WindowEvent::ThemeChanged(theme) => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(WindowThemeChanged {
+                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                    theme: match theme {
+                        winit::window::Theme::Light => WindowTheme::Light,
+                        winit::window::Theme::Dark => WindowTheme::Dark,
+                    },
+                })
+                .unwrap(),
+            WindowEvent::Occluded(occlusion) => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(match occlusion {
+                    true => WindowOcclusion::Occluded {
+                        window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                    },
+                    false => WindowOcclusion::NotOccluded {
+                        window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                    },
+                })
+                .unwrap(),
+            WindowEvent::RedrawRequested => self
+                .app
+                .world
+                .get_resource_mut::<Events>()
+                .unwrap()
+                .push_event(RequestRedraw)
+                .unwrap(),
+            _ => (), // expand when input system is being implemented
         }
     }
 
-    fn device_event(
-        &mut self,
-        _: &winit::event_loop::ActiveEventLoop,
-        _device_id: winit::event::DeviceId,
-        event: winit::event::DeviceEvent,
-    ) {
-        self.app
-            .world
-            .get_resource_mut::<Events>()
-            .unwrap()
-            .push_event(event)
-            .unwrap();
-    }
+    // fn device_event(
+    //     &mut self,
+    //     _: &winit::event_loop::ActiveEventLoop,
+    //     _device_id: winit::event::DeviceId,
+    //     event: winit::event::DeviceEvent,
+    // ) {
+    //     todo!()
+    // }
 
     fn about_to_wait(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         // update the app

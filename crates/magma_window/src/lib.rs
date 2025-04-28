@@ -15,7 +15,7 @@ impl Module for WindowModule {
         app.register_event::<RequestRedraw>();
         app.register_event::<WindowCreated>();
         app.register_event::<WindowCloseRequested>();
-        app.register_event::<WindowClosed>();
+        // app.register_event::<WindowClosed>();
         app.register_event::<WindowDestroyed>();
         app.register_event::<CursorMoved>();
         app.register_event::<CursorEntered>();
