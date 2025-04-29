@@ -26,12 +26,13 @@ fn close_window(world: &World) {
 
 use magma_app::{App, events::Events, module::Module};
 use magma_math::IVec2;
-use magma_window::window::WindowTheme;
+use magma_window::window::{Monitor, VideoMode, WindowMode, WindowPosition, WindowTheme};
 use magma_window::window_event::*;
 use magma_window::{Window, WindowModule};
 use windows::Windows;
-use winit::event::Event;
-use winit::window::Window as WinitWindow;
+use winit::dpi::{PhysicalPosition, PhysicalSize};
+use winit::monitor::VideoModeHandle;
+use winit::window::{CursorGrabMode, Fullscreen, Window as WinitWindow, WindowButtons};
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
@@ -240,9 +241,7 @@ impl ApplicationHandler for WrappedApp {
             .for_each(|window_entity| {
                 let mut window_component = window_entity.get_component_mut::<Window>().unwrap();
                 if !window_component.has_window {
-                    let window = event_loop
-                        .create_window(WinitWindow::default_attributes())
-                        .unwrap();
+                    let window = create_winit_window(event_loop, &mut window_component);
                     let window_id = window.id();
 
                     self.windows.winit_windows.insert(window_id, window);
@@ -253,7 +252,7 @@ impl ApplicationHandler for WrappedApp {
                         .entity_to_window
                         .insert(window_entity.id(), window_id);
                     window_component.has_window = true;
-                } else {
+                } else if window_component.changed_attr {
                     let winit_window = self
                         .windows
                         .winit_windows
@@ -265,6 +264,14 @@ impl ApplicationHandler for WrappedApp {
                                 .unwrap(),
                         )
                         .unwrap();
+
+                    // update window attributes
+                    winit_window.set_title(&window_component.title())
+                    // match window_component.position() {
+                    //     magma_window::window::WindowPosition::Auto => ,
+                    //     magma_window::window::WindowPosition::Center => todo!(),
+                    //     magma_window::window::WindowPosition::Pos(ivec2) => todo!(),
+                    // }
                 }
             });
     }
@@ -278,4 +285,193 @@ fn winit_event_loop(app: App) {
         windows: Windows::new(),
     };
     event_loop.run_app(&mut app).unwrap();
+}
+
+fn create_winit_window(
+    event_loop: &winit::event_loop::ActiveEventLoop,
+    window: &mut Window,
+) -> WinitWindow {
+    let mut window_attributes = WinitWindow::default_attributes();
+
+    let window_resolution = window.resolution();
+    let window_resize_limit = window.resize_limit();
+
+    let mut window_buttons = WindowButtons::empty();
+    {
+        let buttons = window.titlebar_buttons();
+        if buttons.minimize {
+            window_buttons.insert(WindowButtons::MINIMIZE);
+        }
+        if buttons.maximize {
+            window_buttons.insert(WindowButtons::MAXIMIZE);
+        }
+        if buttons.close {
+            window_buttons.insert(WindowButtons::CLOSE);
+        }
+    }
+
+    window_attributes = window_attributes
+        .with_title(window.title())
+        .with_inner_size(PhysicalSize::new(
+            window_resolution.width(),
+            window_resolution.height(),
+        ))
+        .with_resizable(window.resizable())
+        .with_min_inner_size(PhysicalSize::new(
+            window_resize_limit.min_width(),
+            window_resize_limit.min_height(),
+        ))
+        .with_max_inner_size(PhysicalSize::new(
+            window_resize_limit.max_width(),
+            window_resize_limit.max_height(),
+        ))
+        .with_fullscreen(match window.mode() {
+            WindowMode::Windowed => None,
+            WindowMode::BorderlessFullscreen(monitor) => {
+                Some(Fullscreen::Borderless(match monitor {
+                    Monitor::Current => None,
+                    Monitor::Primary => event_loop.primary_monitor(),
+                    Monitor::Index(id) => event_loop.available_monitors().nth(id),
+                }))
+            }
+            WindowMode::Fullscreen(monitor, video_mode) => {
+                Some(Fullscreen::Exclusive(match monitor {
+                    Monitor::Current => match video_mode {
+                        VideoMode::Current => {
+                            let monitor = event_loop.available_monitors().nth(0).unwrap();
+                            monitor
+                                .video_modes()
+                                .filter(|mode| {
+                                    mode.size() == monitor.size()
+                                        && Some(mode.refresh_rate_millihertz())
+                                            == monitor.refresh_rate_millihertz()
+                                })
+                                .max_by_key(VideoModeHandle::bit_depth)
+                                .unwrap()
+                        }
+                        VideoMode::Specific {
+                            size,
+                            bit_depth,
+                            refresh_rate_millihertz,
+                        } => event_loop
+                            .available_monitors()
+                            .nth(0)
+                            .unwrap()
+                            .video_modes()
+                            .find(|mode| {
+                                mode.size().width == size.x
+                                    && mode.size().height == size.y
+                                    && mode.refresh_rate_millihertz() == refresh_rate_millihertz
+                                    && mode.bit_depth() == bit_depth
+                            })
+                            .unwrap(),
+                    },
+                    Monitor::Primary => match video_mode {
+                        VideoMode::Current => {
+                            let monitor = event_loop.primary_monitor().unwrap();
+                            monitor
+                                .video_modes()
+                                .filter(|mode| {
+                                    mode.size() == monitor.size()
+                                        && Some(mode.refresh_rate_millihertz())
+                                            == monitor.refresh_rate_millihertz()
+                                })
+                                .max_by_key(VideoModeHandle::bit_depth)
+                                .unwrap()
+                        }
+                        VideoMode::Specific {
+                            size,
+                            bit_depth,
+                            refresh_rate_millihertz,
+                        } => event_loop
+                            .primary_monitor()
+                            .unwrap()
+                            .video_modes()
+                            .find(|mode| {
+                                mode.size().width == size.x
+                                    && mode.size().height == size.y
+                                    && mode.refresh_rate_millihertz() == refresh_rate_millihertz
+                                    && mode.bit_depth() == bit_depth
+                            })
+                            .unwrap(),
+                    },
+                    Monitor::Index(id) => match video_mode {
+                        VideoMode::Current => {
+                            let monitor = event_loop.available_monitors().nth(id).unwrap();
+                            monitor
+                                .video_modes()
+                                .filter(|mode| {
+                                    mode.size() == monitor.size()
+                                        && Some(mode.refresh_rate_millihertz())
+                                            == monitor.refresh_rate_millihertz()
+                                })
+                                .max_by_key(VideoModeHandle::bit_depth)
+                                .unwrap()
+                        }
+                        VideoMode::Specific {
+                            size,
+                            bit_depth,
+                            refresh_rate_millihertz,
+                        } => event_loop
+                            .available_monitors()
+                            .nth(id)
+                            .unwrap()
+                            .video_modes()
+                            .find(|mode| {
+                                mode.size().width == size.x
+                                    && mode.size().height == size.y
+                                    && mode.refresh_rate_millihertz() == refresh_rate_millihertz
+                                    && mode.bit_depth() == bit_depth
+                            })
+                            .unwrap(),
+                    },
+                }))
+            }
+        })
+        .with_decorations(window.decorations())
+        .with_enabled_buttons(window_buttons)
+        .with_transparent(window.transparent())
+        .with_theme(match window.window_theme() {
+            WindowTheme::Auto => None,
+            WindowTheme::Light => Some(winit::window::Theme::Light),
+            WindowTheme::Dark => Some(winit::window::Theme::Dark),
+        });
+
+    window_attributes = match window.position() {
+        WindowPosition::Center => {
+            window_attributes.with_position(PhysicalPosition::new(0, 0)) // TODO: calculate screen center
+        }
+        WindowPosition::Pos(vec) => {
+            window_attributes.with_position(PhysicalPosition::new(vec.x, vec.y))
+        }
+        _ => window_attributes,
+    };
+
+    let winit_window = event_loop.create_window(window_attributes).unwrap();
+
+    winit_window
+        .set_cursor_grab(match window.cursor_mode() {
+            magma_window::window::CursorMode::Free => winit::window::CursorGrabMode::None,
+            magma_window::window::CursorMode::Confined => winit::window::CursorGrabMode::Confined,
+            magma_window::window::CursorMode::Locked => winit::window::CursorGrabMode::Locked,
+        })
+        .or_else(|_| {
+            // setting cursor mode to confined if locked failed
+            window.set_cursor_mode(magma_window::window::CursorMode::Confined);
+            winit_window.set_cursor_grab(CursorGrabMode::Confined)
+        })
+        .or_else(|_| {
+            // setting cursor mode to locked if confined failed
+            window.set_cursor_mode(magma_window::window::CursorMode::Locked);
+            winit_window.set_cursor_grab(CursorGrabMode::Locked)
+        })
+        .unwrap();
+
+    if window.focused() {
+        winit_window.focus_window();
+    }
+
+    winit_window.set_cursor_visible(window.cursor_visible());
+
+    winit_window
 }
