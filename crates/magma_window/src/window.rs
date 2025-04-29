@@ -23,9 +23,9 @@ pub struct Window {
     window_theme: WindowTheme,
     desired_maximum_frame_latency: Option<NonZero<u32>>, // wgpu::SurfaceConfiguration::desired_maximum_frame_latency
 
-    /// true if the backend has created a window for this component
+    /// True if the backend has created a window for this component.
     pub has_window: bool,
-    /// true if this component was modified in the current update
+    /// True if this component was modified in the current update. This does not include changes that the backend makesto sync windows.
     pub changed_attr: bool,
 }
 
