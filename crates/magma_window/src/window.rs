@@ -29,7 +29,6 @@ pub struct Window {
     pub changed_attr: bool,
 }
 
-// TODO: Emit WindowAttributesChange event, when things are modified.
 impl Window {
     pub fn new() -> Self {
         Self {
@@ -208,6 +207,10 @@ impl Window {
         self.changed_attr = true;
     }
 }
+
+/// Marks a window that has been requested to close
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct ClosingWindow;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum WindowPosition {

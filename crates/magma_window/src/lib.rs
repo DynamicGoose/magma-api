@@ -1,5 +1,5 @@
 use magma_app::{App, module::Module};
-pub use window::Window;
+pub use window::{ClosingWindow, Window};
 use window_event::*;
 
 pub mod window;
@@ -10,6 +10,7 @@ pub struct WindowModule;
 impl Module for WindowModule {
     fn setup(self, app: &mut App) {
         app.world.register_component::<Window>();
+        app.world.register_component::<ClosingWindow>();
 
         app.register_event::<WindowResized>();
         app.register_event::<RequestRedraw>();
