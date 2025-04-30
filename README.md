@@ -49,9 +49,9 @@ magma_api = "0.2.0-alpha"
 
 ### Entity-Component-System (Magma-ECS)
 
-**Entity:** An *entity* is just an index into the component storage.
-**Component:** A *component* holds some type of data. Entities can have components assigned to them.
-**System:** A *system* is a piece of code (usually a function), that reads and modifies the data.
+**Entity:** An *entity* is just an index into the component storage.  
+**Component:** A *component* holds some type of data. Entities can have components assigned to them.  
+**System:** A *system* is a piece of code (usually a function), that reads and modifies the data.  
 
 Another way to think about this would be *Identifier-Data-Logic*.
 
