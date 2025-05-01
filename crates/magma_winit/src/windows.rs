@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use magma_app::entities::Entity;
 use magma_math::IVec2;
 use magma_window::{
     Window,
@@ -14,8 +15,8 @@ use winit::{
 /// After adding the [`WinitModule`](crate::WinitModule) the [`Windows`] resource can be accessed.
 #[derive(Default)]
 pub struct Windows {
-    pub window_to_entity: HashMap<WindowId, usize>,
-    pub entity_to_window: HashMap<usize, WindowId>,
+    pub window_to_entity: HashMap<WindowId, Entity>,
+    pub entity_to_window: HashMap<Entity, WindowId>,
     pub winit_windows: HashMap<WindowId, WinitWindow>,
 }
 
@@ -24,7 +25,7 @@ impl Windows {
         Self::default()
     }
 
-    pub fn delete_window(&mut self, window: usize) {
+    pub fn delete_window(&mut self, window: Entity) {
         let window_id = self.entity_to_window.get(&window).unwrap();
 
         self.window_to_entity.remove(window_id);
@@ -36,7 +37,7 @@ impl Windows {
         &mut self,
         event_loop: &winit::event_loop::ActiveEventLoop,
         window: &mut Window,
-        entity_id: usize,
+        entity: Entity,
     ) {
         let mut window_attributes = WinitWindow::default_attributes();
 
@@ -237,16 +238,16 @@ impl Windows {
         let window_id = winit_window.id();
 
         self.winit_windows.insert(window_id, winit_window);
-        self.window_to_entity.insert(window_id, entity_id);
-        self.entity_to_window.insert(entity_id, window_id);
+        self.window_to_entity.insert(window_id, entity);
+        self.entity_to_window.insert(entity, window_id);
 
         window.has_window = true;
     }
 
-    pub fn update_winit_window(&mut self, window: &mut Window, entity_id: usize) {
+    pub fn update_winit_window(&mut self, window: &mut Window, entity: Entity) {
         let winit_window = self
             .winit_windows
-            .get(&self.entity_to_window.get(&entity_id).unwrap())
+            .get(&self.entity_to_window.get(&entity).unwrap())
             .unwrap();
 
         winit_window.set_title(&window.title());

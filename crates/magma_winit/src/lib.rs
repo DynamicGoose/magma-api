@@ -24,6 +24,7 @@ fn close_window(world: &World) {
 ```
 */
 
+use magma_app::entities::Entity;
 use magma_app::{App, events::Events, module::Module};
 use magma_math::IVec2;
 use magma_window::window::WindowTheme;
@@ -220,7 +221,7 @@ impl ApplicationHandler for WrappedApp {
                 .world
                 .get_resource_mut::<Events>()
                 .unwrap()
-                .push_event(RequestRedraw)
+                .push_event(RedrawRequested)
                 .unwrap(),
             _ => (), // expand when input system is being implemented
         }
@@ -250,13 +251,21 @@ impl ApplicationHandler for WrappedApp {
                     self.windows.create_winit_window(
                         event_loop,
                         &mut window_component,
-                        window_entity.id(),
+                        Entity(window_entity.id()),
                     );
                 } else if window_component.changed_attr {
                     self.windows
-                        .update_winit_window(&mut window_component, window_entity.id());
+                        .update_winit_window(&mut window_component, Entity(window_entity.id()));
                 }
                 window_component.changed_attr = false;
+                self.app
+                    .world
+                    .get_resource_mut::<Events>()
+                    .unwrap()
+                    .push_event(WindowCreated {
+                        window: Entity(window_entity.id()),
+                    })
+                    .unwrap();
             });
 
         // close windows which have a pending close request
@@ -266,9 +275,17 @@ impl ApplicationHandler for WrappedApp {
             .unwrap()
             .iter()
             .for_each(|window_entity| {
-                self.windows.delete_window(window_entity.id());
+                self.windows.delete_window(Entity(window_entity.id()));
                 window_entity.delete_component::<Window>().unwrap();
                 window_entity.delete_component::<ClosingWindow>().unwrap();
+                self.app
+                    .world
+                    .get_resource_mut::<Events>()
+                    .unwrap()
+                    .push_event(WindowClosed {
+                        window: Entity(window_entity.id()),
+                    })
+                    .unwrap();
             });
     }
 }
