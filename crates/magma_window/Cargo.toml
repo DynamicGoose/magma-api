@@ -4,5 +4,5 @@ version = "0.1.0-alpha"
 edition = "2024"
 
 [dependencies]
-magma_app = { path = "../magma_app", version = "0.2.0-alpha" }
+magma_app = { path = "../magma_app", version = "0.2.0-alpha.1" }
 magma_math = { path = "../magma_math", version = "0.1.0-alpha" }

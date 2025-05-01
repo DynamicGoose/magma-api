@@ -4,7 +4,7 @@ use magma_app::entities::Entity;
 use magma_math::IVec2;
 use magma_window::{
     Window,
-    window::{Monitor, VideoMode, WindowMode, WindowPosition, WindowTheme},
+    window::{Monitor, VideoMode, WindowMode, WindowPosition, WindowResolution, WindowTheme},
 };
 use winit::{
     dpi::{PhysicalPosition, PhysicalSize},
@@ -233,6 +233,11 @@ impl Windows {
         }
 
         winit_window.set_cursor_visible(window.cursor_visible());
+
+        window.set_resolution(WindowResolution {
+            width: winit_window.inner_size().width,
+            height: winit_window.inner_size().height,
+        });
 
         // add window to self
         let window_id = winit_window.id();

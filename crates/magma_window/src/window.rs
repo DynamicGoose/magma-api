@@ -2,7 +2,7 @@ use std::num::NonZero;
 
 use magma_math::{IVec2, UVec2};
 
-#[derive(Default)]
+#[derive(Clone, PartialEq, Eq, Debug, Default)]
 pub struct Window {
     title: String,
     name: Option<String>,
@@ -42,163 +42,199 @@ impl Window {
         }
     }
 
+    /// Get the window's display title.
     pub fn title(&self) -> String {
         self.title.to_owned()
     }
 
+    /// Set the window's display title.
     pub fn set_title(&mut self, title: &str) {
         self.title = title.to_owned();
         self.changed_attr = true;
     }
 
+    /// Get the window's optional name.
     pub fn name(&self) -> Option<String> {
         self.name.to_owned()
     }
 
+    /// Set the window's optional name. This can only be set after first creating the window.
     pub fn set_name(&mut self, name: &str) {
         self.name = Some(name.to_owned());
         self.changed_attr = true;
     }
 
+    /// Get the current [`WindowPosition`].
     pub fn position(&self) -> WindowPosition {
         self.position
     }
 
+    /// Set the [`WindowPosition`].
     pub fn set_position(&mut self, position: WindowPosition) {
         self.position = position;
         self.changed_attr = true;
     }
 
+    /// Get the current [`WindowResolution`].
     pub fn resolution(&self) -> WindowResolution {
         self.resolution
     }
 
+    /// Set the [`WindowResolution`].
     pub fn set_resolution(&mut self, resolution: WindowResolution) {
         self.resolution = resolution;
         self.changed_attr = true;
     }
 
+    /// Is the window resizable?
     pub fn resizable(&self) -> bool {
         self.resizable
     }
 
+    /// Set if the window should be resizable.
     pub fn set_resizable(&mut self, resizable: bool) {
         self.resizable = resizable;
         self.changed_attr = true;
     }
 
+    /// Get the current [`WindowResizeLimit`].
     pub fn resize_limit(&self) -> WindowResizeLimit {
         self.resize_limit
     }
 
+    /// Set the [`WindowResizeLimit`].
     pub fn set_resize_limit(&mut self, resize_limit: WindowResizeLimit) {
         self.resize_limit = resize_limit;
         self.changed_attr = true;
     }
 
+    /// Get the current [`WindowMode`]
     pub fn mode(&self) -> WindowMode {
         self.mode
     }
 
+    /// Set the [`WindowMode`].
     pub fn set_mode(&mut self, mode: WindowMode) {
         self.mode = mode;
         self.changed_attr = true;
     }
 
+    /// Get the current [`CursorMode`].
     pub fn cursor_mode(&self) -> CursorMode {
         self.cursor_mode
     }
 
+    /// Set the [`CursorMode`].
     pub fn set_cursor_mode(&mut self, cursor_mode: CursorMode) {
         self.cursor_mode = cursor_mode;
         self.changed_attr = true;
     }
 
+    /// Is the cursor visible?
     pub fn cursor_visible(&self) -> bool {
         self.cursor_visible
     }
 
+    /// Set if the cursor should be visible.
     pub fn set_cursor_visible(&mut self, cursor_visible: bool) {
         self.cursor_visible = cursor_visible;
         self.changed_attr = true;
     }
 
+    /// Are window decorations enabled?
     pub fn decorations(&self) -> bool {
         self.decorations
     }
 
+    /// Set if window decorations should be enabled.
     pub fn set_decorations(&mut self, decorations: bool) {
         self.decorations = decorations;
         self.changed_attr = true;
     }
 
+    /// Get enabled [`TitlebarButtons`].
     pub fn titlebar_buttons(&self) -> TitlebarButtons {
         self.titlebar_buttons
     }
 
+    /// Set which [`TitlebarButtons`] should be enabled.
     pub fn set_titlebar_buttons(&mut self, titlebar_buttons: TitlebarButtons) {
         self.titlebar_buttons = titlebar_buttons;
         self.changed_attr = true;
     }
 
+    /// Get the current [`PresentMode`].
     pub fn present_mode(&self) -> PresentMode {
         self.present_mode
     }
 
+    /// Set the [`PresentMode`].
     pub fn set_present_mode(&mut self, present_mode: PresentMode) {
         self.present_mode = present_mode;
         self.changed_attr = true;
     }
 
+    /// Get the current [`AlphaMode`].
     pub fn alpha_mode(&self) -> AlphaMode {
         self.alpha_mode
     }
 
+    /// Set the [`AlphaMode`].
     pub fn set_alpha_mode(&mut self, alpha_mode: AlphaMode) {
         self.alpha_mode = alpha_mode;
         self.changed_attr = true;
     }
 
+    /// Is the window transparent?
     pub fn transparent(&self) -> bool {
         self.transparent
     }
 
+    /// Set if the window should be transparent.
     pub fn set_transparent(&mut self, transparent: bool) {
         self.transparent = transparent;
         self.changed_attr = true;
     }
 
+    /// Is the window focused?
     pub fn focused(&self) -> bool {
         self.focused
     }
 
+    /// Set if the window should be focused.
     pub fn set_focused(&mut self, focused: bool) {
         self.focused = focused;
         self.changed_attr = true;
     }
 
+    /// Is default event handling enabled for this window?
     pub fn default_event_handling(&self) -> bool {
         self.default_event_handling
     }
 
+    /// Set if default event handling should be enabled.
     pub fn set_default_event_handling(&mut self, default_event_handling: bool) {
         self.default_event_handling = default_event_handling;
         self.changed_attr = true;
     }
 
+    /// Get the current [`WindowTheme`].
     pub fn window_theme(&self) -> WindowTheme {
         self.window_theme
     }
 
+    /// Set the [`WindowTheme`].
     pub fn set_window_theme(&mut self, window_theme: WindowTheme) {
         self.window_theme = window_theme;
         self.changed_attr = true;
     }
 
+    /// Get the desired maximum frame latency (see [`wgpu::SurfaceConfiguration::desired_maximum_frame_latency`](https://docs.rs/wgpu/latest/wgpu/type.SurfaceConfiguration.html#structfield.desired_maximum_frame_latency)).
     pub fn desired_maximum_frame_latency(&self) -> Option<NonZero<u32>> {
         self.desired_maximum_frame_latency
     }
 
+    /// Set the disired maximum frame latency.
     pub fn set_desired_maximum_frame_latency(
         &mut self,
         desired_maximum_frame_latency: Option<NonZero<u32>>,
@@ -212,29 +248,23 @@ impl Window {
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct ClosingWindow;
 
+/// Position of a window
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum WindowPosition {
+    /// Automatically set an initial position for the [`Window`]. This will be converted into [`WindowPosition::Pos`] once the window has been created.
     #[default]
     Auto,
+    /// Center the [`Window`] on the screen. This will be converted to [`WindowPosition::Pos`] once the window has been created.
     Center,
+    /// Physical position of a window starting from the top left corner of the screen.
     Pos(IVec2),
 }
 
-impl WindowPosition {
-    pub fn set_pos(&mut self, pos: IVec2) {
-        *self = Self::Pos(pos);
-    }
-
-    pub fn center(&mut self) {
-        *self = Self::Center;
-    }
-}
-
-/// Window resolution in physical pixels
+/// Window resolution in physical pixels.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct WindowResolution {
-    width: u32,
-    height: u32,
+    pub width: u32,
+    pub height: u32,
 }
 
 impl Default for WindowResolution {
@@ -251,30 +281,18 @@ impl WindowResolution {
         Self { width, height }
     }
 
-    pub const fn width(&self) -> u32 {
-        self.width
-    }
-
-    pub const fn height(&self) -> u32 {
-        self.height
-    }
-
     pub const fn size(&self) -> UVec2 {
         UVec2::new(self.width(), self.height())
     }
-
-    pub const fn set(&mut self, width: u32, height: u32) {
-        self.width = width;
-        self.height = height;
-    }
 }
 
+/// Resize limit of a window.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct WindowResizeLimit {
-    min_width: u32,
-    min_height: u32,
-    max_width: u32,
-    max_height: u32,
+    pub min_width: u32,
+    pub min_height: u32,
+    pub max_width: u32,
+    pub max_height: u32,
 }
 
 impl Default for WindowResizeLimit {
@@ -333,14 +351,19 @@ impl WindowResizeLimit {
     }
 }
 
+/// The windowing mode of the window.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub enum WindowMode {
+    /// The window should be the size of it's resolution.
     #[default]
     Windowed,
+    /// The window along with its resolution gets upscaled to fit the screen.
     BorderlessFullscreen(Monitor),
+    /// True fullscreen mode. The window occupies the whole screen, its resolution is not modified.
     Fullscreen(Monitor, VideoMode),
 }
 
+/// The theme variant to use
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
 pub enum WindowTheme {
     #[default]
