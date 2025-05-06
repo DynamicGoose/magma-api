@@ -1,25 +1,16 @@
 {
   description = "Magma-API dev shell";
+
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    dot-files.url = "git+https://codeberg.org/DynamicGoose/dot-files.git";
   };
 
   outputs =
-    { self, nixpkgs }:
-    let
-      systems = [
-        "x86_64-linux"
-        "i686-linux"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "aarch64-darwin"
-      ];
-    in
+    { self, dot-files }:
     {
-      devShells = nixpkgs.lib.genAttrs systems (system: {
+      devShells = dot-files.lib.eachSystem (pkgs: {
         default =
           let
-            pkgs = import nixpkgs { inherit system; };
             libPath =
               with pkgs;
               lib.makeLibraryPath [
