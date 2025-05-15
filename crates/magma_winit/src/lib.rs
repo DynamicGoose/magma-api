@@ -54,12 +54,17 @@ impl Module for WinitModule {
         app.set_runner(winit_event_loop);
         app.add_module(WindowModule);
 
+        // default event handling
         app.add_event_systems::<WindowCloseRequested>(&[(
             systems::mark_closed_windows,
-            "mark_closed_windows",
+            "winit_mark_closed",
             &[],
         )])
         .unwrap();
+        app.add_event_systems::<WindowResized>(&[(systems::resized, "winit_resized", &[])])
+            .unwrap();
+        app.add_event_systems::<WindowMoved>(&[(systems::moved, "winit_moved", &[])])
+            .unwrap();
     }
 }
 
