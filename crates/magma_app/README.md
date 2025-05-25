@@ -16,7 +16,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-magma_app = "0.1.0-beta"
+magma_app = "0.2.0-alpha.2"
 ```
 
 ## Disclaimer
