@@ -281,8 +281,16 @@ impl WindowResolution {
         Self { width, height }
     }
 
+    pub const fn width(&self) -> u32 {
+        self.width
+    }
+
+    pub const fn height(&self) -> u32 {
+        self.height
+    }
+
     pub const fn size(&self) -> UVec2 {
-        UVec2::new(self.width(), self.height())
+        UVec2::new(self.width, self.height)
     }
 }
 
