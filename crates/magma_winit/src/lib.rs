@@ -64,6 +64,8 @@ impl Module for WinitModule {
             .unwrap();
         app.add_event_systems::<WindowMoved>(&[(systems::moved, "winit_moved", &[])])
             .unwrap();
+        app.add_event_systems::<WindowFocused>(&[(systems::focused, "winit_focused", &[])])
+            .unwrap();
     }
 }
 
@@ -153,13 +155,14 @@ impl ApplicationHandler for WrappedApp {
                     window: *self.windows.window_to_entity.get(&window_id).unwrap(),
                 })
                 .unwrap(),
-            WindowEvent::Focused(_) => self
+            WindowEvent::Focused(focus) => self
                 .app
                 .world
                 .get_resource_mut::<Events>()
                 .unwrap()
                 .push_event(WindowFocused {
                     window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                    focus,
                 })
                 .unwrap(),
             WindowEvent::CursorMoved { position, .. } => self
@@ -270,6 +273,17 @@ impl ApplicationHandler for WrappedApp {
                         window: window_entity.into(),
                     })
                     .unwrap();
+            });
+
+        // TODO: this could be refactored, when scheduling systems as "start" or "end" is supported
+        self.app
+            .world
+            .query::<(Window, ClosingWindow)>()
+            .unwrap()
+            .iter()
+            .for_each(|closing_window| {
+                self.windows.delete_window(closing_window.into());
+                closing_window.delete();
             });
 
         // close windows which have a pending close request

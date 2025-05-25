@@ -44,6 +44,7 @@ pub struct CursorLeft {
 
 pub struct WindowFocused {
     pub window: Entity,
+    pub focus: bool,
 }
 
 pub enum WindowOcclusion {

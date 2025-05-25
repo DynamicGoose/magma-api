@@ -6,7 +6,7 @@ use magma_app::{
 use magma_window::{
     ClosingWindow, Window,
     window::WindowResolution,
-    window_event::{WindowCloseRequested, WindowMoved, WindowResized},
+    window_event::{WindowCloseRequested, WindowFocused, WindowMoved, WindowResized},
 };
 
 pub fn mark_closed_windows(world: &World) {
@@ -68,6 +68,23 @@ pub fn moved(world: &World) {
             window.set_position(magma_window::window::WindowPosition::Pos(
                 move_event.position,
             ));
+            window.changed_attr = false;
+        }
+    }
+}
+
+pub fn focused(world: &World) {
+    let events = world.get_resource::<Events>().unwrap();
+    let focus_events = events.get_events::<WindowFocused>().unwrap();
+
+    for focus_event in focus_events {
+        let focus_event = focus_event.downcast_ref::<WindowFocused>().unwrap();
+        let mut window = world
+            .get_component_mut::<Window>(focus_event.window)
+            .unwrap();
+
+        if window.default_event_handling() {
+            window.set_focused(focus_event.focus);
             window.changed_attr = false;
         }
     }
