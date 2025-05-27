@@ -263,8 +263,8 @@ pub enum WindowPosition {
 /// Window resolution in physical pixels.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct WindowResolution {
-    pub width: u32,
-    pub height: u32,
+    width: u32,
+    height: u32,
 }
 
 impl Default for WindowResolution {
@@ -297,10 +297,10 @@ impl WindowResolution {
 /// Resize limit of a window.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct WindowResizeLimit {
-    pub min_width: u32,
-    pub min_height: u32,
-    pub max_width: u32,
-    pub max_height: u32,
+    min_width: u32,
+    min_height: u32,
+    max_width: u32,
+    max_height: u32,
 }
 
 impl Default for WindowResizeLimit {
@@ -432,9 +432,9 @@ pub enum AlphaMode {
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct TitlebarButtons {
-    pub minimize: bool,
-    pub maximize: bool,
-    pub close: bool,
+    minimize: bool,
+    maximize: bool,
+    close: bool,
 }
 
 impl Default for TitlebarButtons {
@@ -444,5 +444,35 @@ impl Default for TitlebarButtons {
             maximize: true,
             close: true,
         }
+    }
+}
+
+impl TitlebarButtons {
+    pub const fn new(minimize: bool, maximize: bool, close: bool) -> Self {
+        Self {
+            minimize,
+            maximize,
+            close,
+        }
+    }
+
+    pub const fn all_enabled() -> Self {
+        Self {
+            minimize: true,
+            maximize: true,
+            close: true,
+        }
+    }
+
+    pub const fn minimize(&self) -> bool {
+        self.minimize
+    }
+
+    pub const fn maximize(&self) -> bool {
+        self.maximize
+    }
+
+    pub const fn close(&self) -> bool {
+        self.close
     }
 }

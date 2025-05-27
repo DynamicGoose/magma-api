@@ -64,6 +64,8 @@ impl Module for WinitModule {
             .unwrap();
         app.add_event_systems::<WindowMoved>(&[(systems::moved, "winit_moved", &[])])
             .unwrap();
+        app.add_event_systems::<WindowDestroyed>(&[(systems::destroyed, "winit_destroyed", &[])])
+            .unwrap();
         app.add_event_systems::<WindowFocused>(&[(systems::focused, "winit_focused", &[])])
             .unwrap();
     }
