@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use magma_app::entities::Entity;
+use magma_app::magma_ecs::entities::Entity;
 use magma_math::IVec2;
 
 use crate::window::WindowTheme;
@@ -31,9 +31,7 @@ pub struct WindowClosed {
 }
 
 /// An event signaling a window has been destroyed. The corresponding entity will no longer exist at the time this is emmited.
-pub struct WindowDestroyed {
-    pub window: Entity,
-}
+pub struct WindowDestroyed;
 
 /// An event signaling that the cursor has moved within a window.
 pub struct CursorMoved {

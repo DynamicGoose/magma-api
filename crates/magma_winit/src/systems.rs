@@ -6,9 +6,7 @@ use magma_app::{
 use magma_window::{
     ClosingWindow, Window,
     window::WindowResolution,
-    window_event::{
-        WindowCloseRequested, WindowDestroyed, WindowFocused, WindowMoved, WindowResized,
-    },
+    window_event::{WindowCloseRequested, WindowFocused, WindowMoved, WindowResized},
 };
 
 pub fn mark_closed_windows(world: &World) {
@@ -33,22 +31,6 @@ pub fn mark_closed_windows(world: &World) {
                     window.assign_components((ClosingWindow,)).unwrap();
                 }
             });
-    }
-}
-
-pub fn destroyed(world: &World) {
-    let events = world.get_resource::<Events>().unwrap();
-    let destroyed_events = events.get_events::<WindowDestroyed>().unwrap();
-
-    for destroyed_event in destroyed_events {
-        let destroyed_event = destroyed_event.downcast_ref::<WindowDestroyed>().unwrap();
-        let window = world
-            .get_component::<Window>(destroyed_event.window)
-            .unwrap();
-
-        if window.default_event_handling() {
-            world.delete_entity(destroyed_event.window).unwrap();
-        }
     }
 }
 

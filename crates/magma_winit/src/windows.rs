@@ -47,13 +47,13 @@ impl Windows {
         let mut window_buttons = WindowButtons::empty();
         {
             let buttons = window.titlebar_buttons();
-            if buttons.minimize {
+            if buttons.minimize() {
                 window_buttons.insert(WindowButtons::MINIMIZE);
             }
-            if buttons.maximize {
+            if buttons.maximize() {
                 window_buttons.insert(WindowButtons::MAXIMIZE);
             }
-            if buttons.close {
+            if buttons.close() {
                 window_buttons.insert(WindowButtons::CLOSE);
             }
         }
@@ -187,26 +187,26 @@ impl Windows {
 
         let winit_window = event_loop.create_window(window_attributes).unwrap();
 
-        winit_window.set_outer_position(match window.position() {
-            WindowPosition::Auto => {
-                let position = winit_window.outer_position().unwrap();
-                window.set_position(WindowPosition::Pos(IVec2 {
-                    x: position.x,
-                    y: position.y,
-                }));
-                position
-            }
-            WindowPosition::Center => {
-                let monitor_size = winit_window.current_monitor().unwrap().size();
-                let x =
-                    (monitor_size.width as i32 / 2) - (winit_window.outer_size().width as i32 / 2);
-                let y = (monitor_size.height as i32 / 2)
-                    - (winit_window.outer_size().height as i32 / 2);
-                window.set_position(WindowPosition::Pos(IVec2 { x, y }));
-                PhysicalPosition::new(x, y)
-            }
-            WindowPosition::Pos(vec) => PhysicalPosition::new(vec.x, vec.y),
-        });
+        // winit_window.set_outer_position(match window.position() {
+        //     WindowPosition::Auto => {
+        //         let position = winit_window.outer_position().unwrap();
+        //         window.set_position(WindowPosition::Pos(IVec2 {
+        //             x: position.x,
+        //             y: position.y,
+        //         }));
+        //         position
+        //     }
+        //     WindowPosition::Center => {
+        //         let monitor_size = winit_window.current_monitor().unwrap().size();
+        //         let x =
+        //             (monitor_size.width as i32 / 2) - (winit_window.outer_size().width as i32 / 2);
+        //         let y = (monitor_size.height as i32 / 2)
+        //             - (winit_window.outer_size().height as i32 / 2);
+        //         window.set_position(WindowPosition::Pos(IVec2 { x, y }));
+        //         PhysicalPosition::new(x, y)
+        //     }
+        //     WindowPosition::Pos(vec) => PhysicalPosition::new(vec.x, vec.y),
+        // });
 
         winit_window
             .set_cursor_grab(match window.cursor_mode() {
@@ -234,10 +234,10 @@ impl Windows {
 
         winit_window.set_cursor_visible(window.cursor_visible());
 
-        window.set_resolution(WindowResolution {
-            width: winit_window.inner_size().width,
-            height: winit_window.inner_size().height,
-        });
+        window.set_resolution(WindowResolution::new(
+            winit_window.inner_size().width,
+            winit_window.inner_size().height,
+        ));
 
         // add window to self
         let window_id = winit_window.id();
@@ -425,13 +425,13 @@ impl Windows {
                 let mut window_buttons = WindowButtons::empty();
                 {
                     let buttons = window.titlebar_buttons();
-                    if buttons.minimize {
+                    if buttons.minimize() {
                         window_buttons.insert(WindowButtons::MINIMIZE);
                     }
-                    if buttons.maximize {
+                    if buttons.maximize() {
                         window_buttons.insert(WindowButtons::MAXIMIZE);
                     }
-                    if buttons.close {
+                    if buttons.close() {
                         window_buttons.insert(WindowButtons::CLOSE);
                     }
                 }

@@ -15,7 +15,8 @@ use magma_ecs::{
 };
 use module::Module;
 
-pub use magma_ecs::*;
+pub use magma_ecs;
+pub use magma_ecs::{World, entities, rayon, resources, systems};
 
 pub mod error;
 pub mod events;
