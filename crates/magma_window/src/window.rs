@@ -3,7 +3,7 @@ use std::num::NonZero;
 use magma_math::{IVec2, UVec2};
 
 /// The Window Component
-#[derive(Clone, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Window {
     title: String,
     name: Option<String>,
@@ -30,17 +30,36 @@ pub struct Window {
     pub changed_attr: bool,
 }
 
-impl Window {
-    pub fn new() -> Self {
+impl Default for Window {
+    fn default() -> Self {
         Self {
             title: "Magma Window".to_owned(),
+            name: None,
+            position: Default::default(),
+            resolution: Default::default(),
             resizable: true,
+            resize_limit: Default::default(),
+            mode: Default::default(),
+            cursor_mode: Default::default(),
             cursor_visible: true,
             decorations: true,
+            titlebar_buttons: Default::default(),
+            present_mode: Default::default(),
+            alpha_mode: Default::default(),
+            transparent: false,
+            focused: true,
             default_event_handling: true,
+            window_theme: Default::default(),
             desired_maximum_frame_latency: NonZero::new(2_u32),
-            ..Default::default()
+            has_window: false,
+            changed_attr: false,
         }
+    }
+}
+
+impl Window {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     /// Create the window with a custom title.

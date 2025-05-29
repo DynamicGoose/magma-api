@@ -10,8 +10,8 @@ This crate integrates [`winit`] into the Magma API in order to manage applicatio
 # fn main() -> Result<(), magma_app::magma_ecs::error::EntityError> {
     let mut app = App::new();
     app.add_module(WinitModule);
-    // add the system to close the created windows
-    app.add_systems(SystemType::Startup, &[(close_windows, "close_windows", &[])]);
+    // Add the system to close created windows. Windows should not be closed in a startup system, bc it might cause the app to hang.
+    app.add_systems(SystemType::Update, &[(close_windows, "close_windows", &[])]);
 
     // create a window
     // The winit module will create a single window on startup. That means there will now be two.
@@ -262,51 +262,45 @@ impl ApplicationHandler for WrappedApp {
             .unwrap()
             .iter()
             .for_each(|closing_window| {
-                self.windows.delete_window(closing_window.into());
                 closing_window.delete();
+            });
+
+        // create winit windows for new window components
+        self.app
+            .world
+            .query::<(Window,)>()
+            .unwrap()
+            .iter()
+            .for_each(|window_entity| {
+                let mut window_component = window_entity.get_component_mut::<Window>().unwrap();
+                if !window_component.has_window {
+                    self.windows.create_winit_window(
+                        event_loop,
+                        &mut window_component,
+                        window_entity.into(),
+                    );
+                } else if window_component.changed_attr {
+                    self.windows
+                        .update_winit_window(&mut window_component, window_entity.into());
+                }
+                window_component.changed_attr = false;
                 self.app
                     .world
                     .get_resource_mut::<Events>()
                     .unwrap()
-                    .push_event(WindowClosed {
-                        window: closing_window.into(),
+                    .push_event(WindowCreated {
+                        window: window_entity.into(),
                     })
                     .unwrap();
             });
 
         let windows = self.app.world.query::<(Window,)>().unwrap();
 
-        // create winit windows for new window components
-        windows.iter().for_each(|window_entity| {
-            let mut window_component = window_entity.get_component_mut::<Window>().unwrap();
-            if !window_component.has_window {
-                self.windows.create_winit_window(
-                    event_loop,
-                    &mut window_component,
-                    window_entity.into(),
-                );
-            } else if window_component.changed_attr {
-                self.windows
-                    .update_winit_window(&mut window_component, window_entity.into());
-            }
-            window_component.changed_attr = false;
-            self.app
-                .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(WindowCreated {
-                    window: window_entity.into(),
-                })
-                .unwrap();
-        });
-
         // exit if no windows are present
-        if self.windows.winit_windows.is_empty() {
+        if windows.is_empty() {
             event_loop.exit();
-            return;
-        }
-        // drop winit windows without an entity
-        if windows.len() < self.windows.winit_windows.len() {
+        } else if windows.len() < self.windows.winit_windows.len() {
+            // drop winit windows without an entity
             let windows_to_drop = self
                 .windows
                 .window_to_entity

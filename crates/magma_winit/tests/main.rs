@@ -8,11 +8,10 @@ fn main() {
     app.add_systems(
         SystemType::Update,
         &[
-            (open_windows, "open_windows", &[]),
             (close_windows, "close_windows", &["open_windows"]),
+            (open_windows, "open_windows", &[]),
         ],
     );
-    app.world.create_entity((Window::new(),)).unwrap();
     app.run();
 }
 
@@ -21,8 +20,11 @@ fn open_windows(world: &World) {
 }
 
 fn close_windows(world: &World) {
-    let query = world.query::<(Window,)>().unwrap();
-    if query.len() == 4 {
-        query.iter().for_each(|w| w.delete());
+    let windows = world.query::<(Window,)>().unwrap();
+    if windows.len() >= 4 {
+        windows.iter().for_each(|w| {
+            println!("closed window: {}", w.id());
+            w.delete();
+        });
     }
 }
