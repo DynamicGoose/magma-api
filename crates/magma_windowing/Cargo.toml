@@ -1,5 +1,5 @@
 [package]
-name = "magma_window"
+name = "magma_windowing"
 version = "0.1.0-alpha"
 edition = "2024"
 

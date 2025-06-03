@@ -3,7 +3,7 @@ use magma_app::{
     events::Events,
     rayon::iter::{IntoParallelRefIterator, ParallelIterator},
 };
-use magma_window::{
+use magma_windowing::{
     ClosingWindow, Window,
     window::WindowResolution,
     window_event::{WindowCloseRequested, WindowFocused, WindowMoved, WindowResized},
@@ -65,7 +65,7 @@ pub fn moved(world: &World) {
             .unwrap();
 
         if window.default_event_handling() {
-            window.set_position(magma_window::window::WindowPosition::Pos(
+            window.set_position(magma_windowing::window::WindowPosition::Pos(
                 move_event.position,
             ));
             window.changed_attr = false;

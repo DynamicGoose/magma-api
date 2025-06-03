@@ -4,21 +4,21 @@ This crate integrates [`winit`] into the Magma API in order to manage applicatio
 # Example
 
 ```
+# use std::error::Error;
 # use magma_app::{magma_ecs::entities::Entity, App, SystemType, World};
-# use magma_window::Window;
+# use magma_windowing::Window;
 # use magma_winit::WinitModule;
-# fn main() -> Result<(), magma_app::magma_ecs::error::EntityError> {
+fn main() -> Result<(), Box<dyn Error>> {
     let mut app = App::new();
     app.add_module(WinitModule);
     // Add the system to close created windows. Windows should not be closed in a startup system, bc it might cause the app to hang.
     app.add_systems(SystemType::Update, &[(close_windows, "close_windows", &[])]);
-
     // create a window
     // The winit module will create a single window on startup. That means there will now be two.
     app.world.create_entity((Window::new().with_title("test"),))?;
     app.run();
-#   Ok(())
-# }
+    Ok(())
+}
 
 // system for closing the opened windows
 fn close_windows(world: &World) {
@@ -34,9 +34,9 @@ fn close_windows(world: &World) {
 
 use magma_app::{App, events::Events, module::Module};
 use magma_math::IVec2;
-use magma_window::window::WindowTheme;
-use magma_window::{ClosingWindow, window_event::*};
-use magma_window::{Window, WindowModule};
+use magma_windowing::window::WindowTheme;
+use magma_windowing::{ClosingWindow, window_event::*};
+use magma_windowing::{Window, WindowModule};
 use windows::Windows;
 use winit::{
     application::ApplicationHandler,
@@ -44,15 +44,11 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
 };
 
-pub use winit;
-
-/// The [`Windows`] resource
-pub mod windows;
-
 mod systems;
+mod windows;
 
 /**
-Adding the [`WinitModule`] to an [`App`] adds functionality for creating and managing windows. It also automatically spawns one window on application start.
+The [`WinitModule`] adds winit as a backend for [magma_windowing](https://crates.io/crates/magma_windowing). It also automatically creates one window on application start.
 */
 pub struct WinitModule;
 
@@ -251,20 +247,6 @@ impl ApplicationHandler for WrappedApp {
     // }
 
     fn about_to_wait(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        // update the app
-        self.app.update();
-
-        // close windows which have a pending close request
-        // TODO: this could be refactored as a system, when scheduling systems at "start" or "end" is supported
-        self.app
-            .world
-            .query::<(ClosingWindow, Window)>()
-            .unwrap()
-            .iter()
-            .for_each(|closing_window| {
-                closing_window.delete();
-            });
-
         // create winit windows for new window components
         self.app
             .world
@@ -321,6 +303,29 @@ impl ApplicationHandler for WrappedApp {
                 self.windows.delete_window(window);
             }
         }
+
+        // Delete window entities which have a pending close request.
+        // Their winit windows will be destroyd before the next update.
+        // TODO: this could be refactored as a system, when scheduling systems at "start" or "end" is supported
+        self.app
+            .world
+            .query::<(ClosingWindow, Window)>()
+            .unwrap()
+            .iter()
+            .for_each(|closing_window| {
+                closing_window.delete();
+                self.app
+                    .world
+                    .get_resource_mut::<Events>()
+                    .unwrap()
+                    .push_event(WindowClosed {
+                        window: closing_window.into(),
+                    })
+                    .unwrap();
+            });
+
+        // update the app
+        self.app.update();
     }
 }
 

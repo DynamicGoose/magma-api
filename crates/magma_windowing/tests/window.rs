@@ -1,6 +1,6 @@
 use magma_app::{App, events::Events};
 use magma_math::IVec2;
-use magma_window::{window_event::*, *};
+use magma_windowing::{window_event::*, *};
 
 #[test]
 fn create_window() {
@@ -104,13 +104,13 @@ fn destroyed_event() {
     let mut app = App::new();
     app.add_module(WindowModule);
 
-    let window = app.world.create_entity((Window::new(),)).unwrap();
+    app.world.create_entity((Window::new(),)).unwrap();
 
     // push event
     app.world
         .get_resource_mut::<Events>()
         .unwrap()
-        .push_event(WindowDestroyed { window })
+        .push_event(WindowDestroyed)
         .unwrap();
 }
 

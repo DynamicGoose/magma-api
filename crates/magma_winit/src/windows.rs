@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use magma_app::entities::Entity;
 use magma_math::IVec2;
-use magma_window::{
+use magma_windowing::{
     Window,
     window::{Monitor, VideoMode, WindowMode, WindowPosition, WindowResolution, WindowTheme},
 };
@@ -210,20 +210,22 @@ impl Windows {
 
         winit_window
             .set_cursor_grab(match window.cursor_mode() {
-                magma_window::window::CursorMode::Free => winit::window::CursorGrabMode::None,
-                magma_window::window::CursorMode::Confined => {
+                magma_windowing::window::CursorMode::Free => winit::window::CursorGrabMode::None,
+                magma_windowing::window::CursorMode::Confined => {
                     winit::window::CursorGrabMode::Confined
                 }
-                magma_window::window::CursorMode::Locked => winit::window::CursorGrabMode::Locked,
+                magma_windowing::window::CursorMode::Locked => {
+                    winit::window::CursorGrabMode::Locked
+                }
             })
             .or_else(|_| {
                 // setting cursor mode to confined if locked failed
-                window.set_cursor_mode(magma_window::window::CursorMode::Confined);
+                window.set_cursor_mode(magma_windowing::window::CursorMode::Confined);
                 winit_window.set_cursor_grab(CursorGrabMode::Confined)
             })
             .or_else(|_| {
                 // setting cursor mode to locked if confined failed
-                window.set_cursor_mode(magma_window::window::CursorMode::Locked);
+                window.set_cursor_mode(magma_windowing::window::CursorMode::Locked);
                 winit_window.set_cursor_grab(CursorGrabMode::Locked)
             })
             .unwrap();
@@ -397,24 +399,24 @@ impl Windows {
 
                 winit_window
                     .set_cursor_grab(match window.cursor_mode() {
-                        magma_window::window::CursorMode::Free => {
+                        magma_windowing::window::CursorMode::Free => {
                             winit::window::CursorGrabMode::None
                         }
-                        magma_window::window::CursorMode::Confined => {
+                        magma_windowing::window::CursorMode::Confined => {
                             winit::window::CursorGrabMode::Confined
                         }
-                        magma_window::window::CursorMode::Locked => {
+                        magma_windowing::window::CursorMode::Locked => {
                             winit::window::CursorGrabMode::Locked
                         }
                     })
                     .or_else(|_| {
                         // setting cursor mode to confined if locked failed
-                        window.set_cursor_mode(magma_window::window::CursorMode::Confined);
+                        window.set_cursor_mode(magma_windowing::window::CursorMode::Confined);
                         winit_window.set_cursor_grab(CursorGrabMode::Confined)
                     })
                     .or_else(|_| {
                         // setting cursor mode to locked if confined failed
-                        window.set_cursor_mode(magma_window::window::CursorMode::Locked);
+                        window.set_cursor_mode(magma_windowing::window::CursorMode::Locked);
                         winit_window.set_cursor_grab(CursorGrabMode::Locked)
                     })
                     .unwrap();

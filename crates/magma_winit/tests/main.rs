@@ -1,5 +1,5 @@
 use magma_app::{App, SystemType, World};
-use magma_window::Window;
+use magma_windowing::Window;
 use magma_winit::WinitModule;
 
 fn main() {
