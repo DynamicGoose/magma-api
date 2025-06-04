@@ -2,6 +2,10 @@
 name = "magma_math"
 version = "0.1.0-alpha"
 edition = "2024"
+description = "Part of the Magma-API, which is the API of the Magma3D game engine. This crate provides some convinient math."
+homepage = "https://dynamicgoose.github.io/magma3d-engine/"
+license = "MIT"
+repository = "https://codeberg.com/DynamicGoose/magma-api"
 
 [dependencies]
 glam = "0.30.1"
