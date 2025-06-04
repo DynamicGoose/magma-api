@@ -1,7 +1,10 @@
 use magma_app::{App, module::Module};
+pub use monitor::{CurrentMonitor, Monitor, PrimaryMonitor};
 pub use window::{ClosingWindow, Window};
 use window_event::*;
 
+/// ECS Monitor representation
+pub mod monitor;
 /// Provides the [`Window`] component and related types.
 pub mod window;
 /// Window related events
@@ -12,6 +15,9 @@ pub struct WindowModule;
 
 impl Module for WindowModule {
     fn setup(self, app: &mut App) {
+        app.world.register_component::<Monitor>();
+        app.world.register_component::<PrimaryMonitor>();
+        app.world.register_component::<CurrentMonitor>();
         app.world.register_component::<Window>();
         app.world.register_component::<ClosingWindow>();
 

@@ -1,5 +1,6 @@
 use std::num::NonZero;
 
+use magma_app::entities::Entity;
 use magma_math::{IVec2, UVec2};
 
 /// The Window Component
@@ -498,9 +499,9 @@ pub enum WindowMode {
     #[default]
     Windowed,
     /// The window along with its resolution gets upscaled to fit the screen.
-    BorderlessFullscreen(Monitor),
+    BorderlessFullscreen(MonitorSelection),
     /// True fullscreen mode. The window occupies the whole screen, its resolution is not modified.
-    Fullscreen(Monitor, VideoMode),
+    Fullscreen(MonitorSelection, VideoModeSelection),
 }
 
 /// The theme variant to use
@@ -517,19 +518,19 @@ pub enum WindowTheme {
 
 /// The monitor to use for a window.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
-pub enum Monitor {
+pub enum MonitorSelection {
     /// Use the currently focused monitor.
     #[default]
     Current,
     /// Use the system's primary monitor.
     Primary,
-    /// Use monitor by index.
-    Index(usize),
+    /// Specify monitor by it's entity.
+    Entity(Entity),
 }
 
 /// Specifies the window's video mode.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
-pub enum VideoMode {
+pub enum VideoModeSelection {
     /// Use the current monitor's viodeo mode
     #[default]
     Current,
