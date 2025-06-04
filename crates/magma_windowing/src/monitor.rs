@@ -28,9 +28,6 @@ impl Monitor {
     }
 }
 
-/// Marker component for the current monitor
-pub struct CurrentMonitor;
-
 /// Marker component for the primary monitor
 pub struct PrimaryMonitor;
 

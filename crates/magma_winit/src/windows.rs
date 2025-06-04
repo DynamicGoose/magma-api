@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use magma_app::{World, entities::Entity};
 use magma_math::IVec2;
 use magma_windowing::{
-    CurrentMonitor, Monitor, PrimaryMonitor, Window,
+    Monitor, PrimaryMonitor, Window,
     window::{
         MonitorSelection, VideoModeSelection, WindowMode, WindowPosition, WindowResolution,
         WindowTheme,
@@ -92,15 +92,7 @@ impl Windows {
                     Some(Fullscreen::Exclusive(match monitor {
                         MonitorSelection::Current => match video_mode {
                             VideoModeSelection::Current => {
-                                let monitor = event_loop
-                                    .available_monitors()
-                                    .nth(
-                                        world.query::<(Monitor, CurrentMonitor)>().unwrap()[0]
-                                            .get_component::<Monitor>()
-                                            .unwrap()
-                                            .id,
-                                    )
-                                    .unwrap();
+                                let monitor = event_loop.available_monitors().nth(0).unwrap();
                                 monitor
                                     .video_modes()
                                     .filter(|mode| {

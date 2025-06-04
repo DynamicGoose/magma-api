@@ -1,5 +1,5 @@
 use magma_app::{App, module::Module};
-pub use monitor::{CurrentMonitor, Monitor, PrimaryMonitor};
+pub use monitor::{Monitor, PrimaryMonitor};
 pub use window::{ClosingWindow, Window};
 use window_event::*;
 
@@ -17,7 +17,6 @@ impl Module for WindowModule {
     fn setup(self, app: &mut App) {
         app.world.register_component::<Monitor>();
         app.world.register_component::<PrimaryMonitor>();
-        app.world.register_component::<CurrentMonitor>();
         app.world.register_component::<Window>();
         app.world.register_component::<ClosingWindow>();
 

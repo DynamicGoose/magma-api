@@ -11,7 +11,8 @@ This crate integrates [`winit`] into the Magma API in order to manage applicatio
 fn main() -> Result<(), Box<dyn Error>> {
     let mut app = App::new();
     app.add_module(WinitModule);
-    // Add the system to close created windows. Windows should not be closed in a startup system, bc it might cause the app to hang.
+    // Add the system to close created windows.
+    // Windows should not be closed in a startup system, bc it might cause the app to hang.
     app.add_systems(SystemType::Update, &[(close_windows, "close_windows", &[])]);
     // create a window
     // The winit module will create a single window on startup. That means there will now be two.

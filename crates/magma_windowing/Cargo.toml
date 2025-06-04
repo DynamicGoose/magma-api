@@ -2,7 +2,11 @@
 name = "magma_windowing"
 version = "0.1.0-alpha"
 edition = "2024"
+description = "Part of the Magma-API, which is the API of the Magma3D game engine. This is responsable for handling windows."
+homepage = "https://dynamicgoose.github.io/magma3d-engine/"
+license = "MIT"
+repository = "https://codeberg.com/DynamicGoose/magma-api"
 
 [dependencies]
-magma_app = { path = "../magma_app", version = "0.2.0-alpha.1" }
+magma_app = { path = "../magma_app", version = "0.2.0-alpha.2" }
 magma_math = { path = "../magma_math", version = "0.1.0-alpha" }

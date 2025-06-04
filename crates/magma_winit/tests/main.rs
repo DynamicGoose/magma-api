@@ -6,37 +6,42 @@ fn main() {
     let mut app = App::new();
     app.add_module(WinitModule);
     app.add_systems(
+        SystemType::Startup,
+        &[(print_monitors, "print_monitors", &[])],
+    );
+    app.add_systems(
         SystemType::Update,
         &[
-            (
-                close_windows,
-                "close_windows",
-                &["open_windows", "print_monitors"],
-            ),
+            (close_windows, "close_windows", &["open_windows"]),
             (open_windows, "open_windows", &[]),
-            (print_monitors, "print_monitors", &[]),
+            (print_monitors, "print_monitors", &["close_windows"]),
         ],
     );
     app.run();
 }
 
 fn open_windows(world: &World) {
-    for _ in 0..2 {
-        world.create_entity((Window::new(),)).unwrap();
-    }
+    world.create_entity((Window::new(),)).unwrap();
 }
 
 fn close_windows(world: &World) {
-    world.query::<(Window,)>().unwrap().iter().for_each(|w| {
-        println!("closed window: {}", w.id());
-        w.delete();
-    });
+    let windows = world.query::<(Window,)>().unwrap();
+    if windows.len() >= 4 {
+        println!("window test...");
+        windows.iter().for_each(|w| {
+            println!("closed window: {}", w.id());
+            w.delete();
+        });
+    }
 }
 
 fn print_monitors(world: &World) {
-    world
-        .query::<(Monitor,)>()
-        .unwrap()
-        .iter()
-        .for_each(|monitor| println!("monitor: {:?}", monitor.get_component::<Monitor>().unwrap()));
+    if world.query::<(Window,)>().unwrap().is_empty() {
+        println!("monitor test...");
+        world
+            .query::<(Monitor,)>()
+            .unwrap()
+            .iter()
+            .for_each(|monitor| println!("{:?}", monitor.get_component::<Monitor>().unwrap()));
+    }
 }
