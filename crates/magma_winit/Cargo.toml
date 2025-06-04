@@ -10,7 +10,7 @@ repository = "https://codeberg.com/DynamicGoose/magma-api"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-magma_app = { path = "../magma_app", version = "0.2.0-alpha.2" }
+magma_app = { path = "../magma_app", version = "0.2.0-alpha.3" }
 magma_math = { path = "../magma_math", version = "0.1.0-alpha" }
 magma_windowing = { path = "../magma_windowing", version = "0.1.0-alpha" }
 winit = "0.30.9"
