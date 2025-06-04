@@ -33,9 +33,10 @@ fn close_windows(world: &World) {
 */
 
 use magma_app::{App, events::Events, module::Module};
-use magma_math::IVec2;
+use magma_math::{IVec2, UVec2};
+use magma_windowing::monitor::VideoMode;
 use magma_windowing::window::WindowTheme;
-use magma_windowing::{ClosingWindow, window_event::*};
+use magma_windowing::{ClosingWindow, Monitor, PrimaryMonitor, window_event::*};
 use magma_windowing::{Window, WindowModule};
 use windows::Windows;
 use winit::{
@@ -79,7 +80,39 @@ struct WrappedApp {
 }
 
 impl ApplicationHandler for WrappedApp {
-    fn resumed(&mut self, _: &winit::event_loop::ActiveEventLoop) {}
+    fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        let primary_monitor = event_loop.primary_monitor();
+        for (id, winit_monitor) in event_loop.available_monitors().enumerate() {
+            let monitor = Monitor {
+                name: winit_monitor.name(),
+                height: winit_monitor.size().height,
+                width: winit_monitor.size().width,
+                position: IVec2::new(winit_monitor.position().x, winit_monitor.position().y),
+                refresh_rate: winit_monitor.refresh_rate_millihertz(),
+                scale_factor: winit_monitor.scale_factor(),
+                video_modes: winit_monitor
+                    .video_modes()
+                    .map(|video_mode_handle| VideoMode {
+                        size: UVec2::new(
+                            video_mode_handle.size().width,
+                            video_mode_handle.size().height,
+                        ),
+                        bit_depth: video_mode_handle.bit_depth(),
+                        refresh_rate: video_mode_handle.refresh_rate_millihertz(),
+                    })
+                    .collect(),
+                id,
+            };
+            if primary_monitor.as_ref() == Some(&winit_monitor) {
+                self.app
+                    .world
+                    .create_entity((monitor, PrimaryMonitor))
+                    .unwrap();
+            } else {
+                self.app.world.create_entity((monitor,)).unwrap();
+            }
+        }
+    }
 
     fn window_event(
         &mut self,

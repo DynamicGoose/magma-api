@@ -1,6 +1,7 @@
 use magma_math::{IVec2, UVec2};
 
 /// An ECS component representing a monitor
+#[derive(Debug)]
 pub struct Monitor {
     /// Optional name of the monitor
     pub name: Option<String>,
@@ -34,6 +35,7 @@ pub struct CurrentMonitor;
 pub struct PrimaryMonitor;
 
 /// Representation for a video mode
+#[derive(Debug)]
 pub struct VideoMode {
     /// Resolution of the video mode
     pub size: UVec2,
