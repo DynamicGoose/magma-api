@@ -3,6 +3,13 @@ use magma_windowing::Window;
 use magma_winit::WinitModule;
 
 fn main() {
+    println!("running window test...");
+    window_test();
+    println!("running monitor test...");
+    monitor_test();
+}
+
+fn window_test() {
     let mut app = App::new();
     app.add_module(WinitModule);
     app.add_systems(
@@ -28,3 +35,5 @@ fn close_windows(world: &World) {
         });
     }
 }
+
+fn monitor_test() {}

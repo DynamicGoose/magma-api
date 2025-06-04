@@ -16,6 +16,8 @@ pub struct Monitor {
     pub scale_factor: f64,
     /// The monitor's video modes
     pub video_modes: Vec<VideoMode>,
+    /// The monitors id in the backend
+    pub id: usize,
 }
 
 impl Monitor {

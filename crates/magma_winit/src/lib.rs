@@ -257,13 +257,17 @@ impl ApplicationHandler for WrappedApp {
                 let mut window_component = window_entity.get_component_mut::<Window>().unwrap();
                 if !window_component.has_window {
                     self.windows.create_winit_window(
+                        &self.app.world,
                         event_loop,
                         &mut window_component,
                         window_entity.into(),
                     );
                 } else if window_component.changed_attr {
-                    self.windows
-                        .update_winit_window(&mut window_component, window_entity.into());
+                    self.windows.update_winit_window(
+                        &mut window_component,
+                        window_entity.into(),
+                        &self.app.world,
+                    );
                 }
                 window_component.changed_attr = false;
                 self.app

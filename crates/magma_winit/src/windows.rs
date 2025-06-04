@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 
-use magma_app::entities::Entity;
+use magma_app::{World, entities::Entity};
 use magma_math::IVec2;
 use magma_windowing::{
-    Window,
-    window::{Monitor, VideoMode, WindowMode, WindowPosition, WindowResolution, WindowTheme},
+    CurrentMonitor, Monitor, PrimaryMonitor, Window,
+    window::{
+        MonitorSelection, VideoModeSelection, WindowMode, WindowPosition, WindowResolution,
+        WindowTheme,
+    },
 };
 use winit::{
     dpi::{PhysicalPosition, PhysicalSize},
@@ -35,6 +38,7 @@ impl Windows {
 
     pub fn create_winit_window(
         &mut self,
+        world: &World,
         event_loop: &winit::event_loop::ActiveEventLoop,
         window: &mut Window,
         entity: Entity,
@@ -77,16 +81,26 @@ impl Windows {
                 WindowMode::Windowed => None,
                 WindowMode::BorderlessFullscreen(monitor) => {
                     Some(Fullscreen::Borderless(match monitor {
-                        Monitor::Current => None,
-                        Monitor::Primary => event_loop.primary_monitor(),
-                        Monitor::Index(id) => event_loop.available_monitors().nth(id),
+                        MonitorSelection::Current => None,
+                        MonitorSelection::Primary => event_loop.primary_monitor(),
+                        MonitorSelection::Entity(entity) => event_loop
+                            .available_monitors()
+                            .nth(world.get_component::<Monitor>(entity).unwrap().id),
                     }))
                 }
                 WindowMode::Fullscreen(monitor, video_mode) => {
                     Some(Fullscreen::Exclusive(match monitor {
-                        Monitor::Current => match video_mode {
-                            VideoMode::Current => {
-                                let monitor = event_loop.available_monitors().nth(0).unwrap();
+                        MonitorSelection::Current => match video_mode {
+                            VideoModeSelection::Current => {
+                                let monitor = event_loop
+                                    .available_monitors()
+                                    .nth(
+                                        world.query::<(Monitor, CurrentMonitor)>().unwrap()[0]
+                                            .get_component::<Monitor>()
+                                            .unwrap()
+                                            .id,
+                                    )
+                                    .unwrap();
                                 monitor
                                     .video_modes()
                                     .filter(|mode| {
@@ -97,13 +111,18 @@ impl Windows {
                                     .max_by_key(VideoModeHandle::bit_depth)
                                     .unwrap()
                             }
-                            VideoMode::Specific {
+                            VideoModeSelection::Specific {
                                 size,
                                 bit_depth,
                                 refresh_rate_millihertz,
                             } => event_loop
                                 .available_monitors()
-                                .nth(0)
+                                .nth(
+                                    world.query::<(Monitor, PrimaryMonitor)>().unwrap()[0]
+                                        .get_component::<Monitor>()
+                                        .unwrap()
+                                        .id,
+                                )
                                 .unwrap()
                                 .video_modes()
                                 .find(|mode| {
@@ -114,8 +133,8 @@ impl Windows {
                                 })
                                 .unwrap(),
                         },
-                        Monitor::Primary => match video_mode {
-                            VideoMode::Current => {
+                        MonitorSelection::Primary => match video_mode {
+                            VideoModeSelection::Current => {
                                 let monitor = event_loop.primary_monitor().unwrap();
                                 monitor
                                     .video_modes()
@@ -127,7 +146,7 @@ impl Windows {
                                     .max_by_key(VideoModeHandle::bit_depth)
                                     .unwrap()
                             }
-                            VideoMode::Specific {
+                            VideoModeSelection::Specific {
                                 size,
                                 bit_depth,
                                 refresh_rate_millihertz,
@@ -143,9 +162,12 @@ impl Windows {
                                 })
                                 .unwrap(),
                         },
-                        Monitor::Index(id) => match video_mode {
-                            VideoMode::Current => {
-                                let monitor = event_loop.available_monitors().nth(id).unwrap();
+                        MonitorSelection::Entity(entity) => match video_mode {
+                            VideoModeSelection::Current => {
+                                let monitor = event_loop
+                                    .available_monitors()
+                                    .nth(world.get_component::<Monitor>(entity).unwrap().id)
+                                    .unwrap();
                                 monitor
                                     .video_modes()
                                     .filter(|mode| {
@@ -156,13 +178,13 @@ impl Windows {
                                     .max_by_key(VideoModeHandle::bit_depth)
                                     .unwrap()
                             }
-                            VideoMode::Specific {
+                            VideoModeSelection::Specific {
                                 size,
                                 bit_depth,
                                 refresh_rate_millihertz,
                             } => event_loop
                                 .available_monitors()
-                                .nth(id)
+                                .nth(world.get_component::<Monitor>(entity).unwrap().id)
                                 .unwrap()
                                 .video_modes()
                                 .find(|mode| {
@@ -251,7 +273,7 @@ impl Windows {
         window.has_window = true;
     }
 
-    pub fn update_winit_window(&mut self, window: &mut Window, entity: Entity) {
+    pub fn update_winit_window(&mut self, window: &mut Window, entity: Entity, world: &World) {
         let winit_window = self
             .winit_windows
             .get(&self.entity_to_window.get(&entity).unwrap())
@@ -300,15 +322,17 @@ impl Windows {
             WindowMode::Windowed => winit_window.set_fullscreen(None),
             WindowMode::BorderlessFullscreen(monitor) => {
                 winit_window.set_fullscreen(Some(Fullscreen::Borderless(match monitor {
-                    Monitor::Current => winit_window.current_monitor(),
-                    Monitor::Primary => winit_window.primary_monitor(),
-                    Monitor::Index(id) => winit_window.available_monitors().nth(id),
+                    MonitorSelection::Current => winit_window.current_monitor(),
+                    MonitorSelection::Primary => winit_window.primary_monitor(),
+                    MonitorSelection::Entity(entity) => winit_window
+                        .available_monitors()
+                        .nth(world.get_component::<Monitor>(entity).unwrap().id),
                 })));
             }
             WindowMode::Fullscreen(monitor, video_mode) => {
                 winit_window.set_fullscreen(Some(Fullscreen::Exclusive(match monitor {
-                    Monitor::Current => match video_mode {
-                        VideoMode::Current => {
+                    MonitorSelection::Current => match video_mode {
+                        VideoModeSelection::Current => {
                             let monitor = winit_window.current_monitor().unwrap();
                             monitor
                                 .video_modes()
@@ -320,7 +344,7 @@ impl Windows {
                                 .max_by_key(VideoModeHandle::bit_depth)
                                 .unwrap()
                         }
-                        VideoMode::Specific {
+                        VideoModeSelection::Specific {
                             size,
                             bit_depth,
                             refresh_rate_millihertz,
@@ -336,8 +360,8 @@ impl Windows {
                             })
                             .unwrap(),
                     },
-                    Monitor::Primary => match video_mode {
-                        VideoMode::Current => {
+                    MonitorSelection::Primary => match video_mode {
+                        VideoModeSelection::Current => {
                             let monitor = winit_window.primary_monitor().unwrap();
                             monitor
                                 .video_modes()
@@ -349,7 +373,7 @@ impl Windows {
                                 .max_by_key(VideoModeHandle::bit_depth)
                                 .unwrap()
                         }
-                        VideoMode::Specific {
+                        VideoModeSelection::Specific {
                             size,
                             bit_depth,
                             refresh_rate_millihertz,
@@ -365,9 +389,12 @@ impl Windows {
                             })
                             .unwrap(),
                     },
-                    Monitor::Index(id) => match video_mode {
-                        VideoMode::Current => {
-                            let monitor = winit_window.available_monitors().nth(id).unwrap();
+                    MonitorSelection::Entity(entity) => match video_mode {
+                        VideoModeSelection::Current => {
+                            let monitor = winit_window
+                                .available_monitors()
+                                .nth(world.get_component::<Monitor>(entity).unwrap().id)
+                                .unwrap();
                             monitor
                                 .video_modes()
                                 .filter(|mode| {
@@ -378,13 +405,13 @@ impl Windows {
                                 .max_by_key(VideoModeHandle::bit_depth)
                                 .unwrap()
                         }
-                        VideoMode::Specific {
+                        VideoModeSelection::Specific {
                             size,
                             bit_depth,
                             refresh_rate_millihertz,
                         } => winit_window
                             .available_monitors()
-                            .nth(id)
+                            .nth(world.get_component::<Monitor>(entity).unwrap().id)
                             .unwrap()
                             .video_modes()
                             .find(|mode| {
