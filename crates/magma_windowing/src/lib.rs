@@ -11,9 +11,9 @@ pub mod window;
 pub mod window_event;
 
 /// The Window module for the App
-pub struct WindowModule;
+pub struct WindowingModule;
 
-impl Module for WindowModule {
+impl Module for WindowingModule {
     fn setup(self, app: &mut App) {
         app.world.register_component::<Monitor>();
         app.world.register_component::<PrimaryMonitor>();

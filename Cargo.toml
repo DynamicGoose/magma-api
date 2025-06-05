@@ -13,15 +13,19 @@ repository = "https://github.com/DynamicGoose/magma-api"
 magma_app = { path = "crates/magma_app", version = "0.2.0-alpha" }
 # magma_audio = { path = "crates/magma_audio", optional = true, version = "0.1.0-alpha.2" }
 magma_math = { path = "crates/magma_math", version = "0.1.0-alpha" }
-# magma_winit = { path = "crates/magma_winit", optional = true, version = "0.1.0-alpha.5" }
+magma_winit = { path = "crates/magma_winit", optional = true, version = "0.1.0-alpha.5" }
+magma_windowing = { path = "crates/magma_windowing", optional = true, version = "0.1.0-alpha" }
+magma_input = { path = "crates/magma_input", optional = true, version = "0.1.0-alpha" }
 # magma_ui = { path = "crates/magma_ui", optional = true, version = "0.1.0-alpha.2" }
 
 [workspace]
 members = ["crates/*"]
 
 [features]
-# default = ["audio", "winit", "ui"]
+default = ["windowing", "input", "winit"]
 
-# audio = ["magma_audio"]
-# winit = ["magma_winit"]
+windowing = ["magma_windowing"]
+input = ["magma_input"]
+winit = ["magma_winit"]
 # ui = ["magma_ui"]
+# audio = ["magma_audio"]
