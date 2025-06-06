@@ -3,7 +3,12 @@ pub use magma_app;
 pub use magma_math;
 // pub use magma_audio;
 // pub use magma_ui;
-// pub use magma_winit;
+#[cfg(feature = "input")]
+pub use magma_input;
+#[cfg(feature = "windowing")]
+pub use magma_windowing;
+#[cfg(feature = "winit")]
+pub use magma_winit;
 
 use magma_app::module::Module;
 // use magma_audio::AudioModule;
@@ -12,9 +17,13 @@ use magma_app::module::Module;
 pub struct DefaultModules;
 
 impl Module for DefaultModules {
-    fn setup(self, _app: &mut magma_app::App) {
-        // app.add_module(WinitModule);
-        // app.add_module(AudioModule);
+    fn setup(self, app: &mut magma_app::App) {
+        #[cfg(feature = "input")]
+        app.add_module(magma_input::InputModule);
+        #[cfg(feature = "windowing")]
+        app.add_module(magma_windowing::WindowingModule);
+        #[cfg(feature = "winit")]
+        app.add_module(magma_winit::WinitModule);
     }
 }
 
