@@ -38,7 +38,7 @@ use magma_math::{IVec2, UVec2};
 use magma_windowing::monitor::VideoMode;
 use magma_windowing::window::WindowTheme;
 use magma_windowing::{ClosingWindow, Monitor, PrimaryMonitor, window_event::*};
-use magma_windowing::{Window, WindowModule};
+use magma_windowing::{Window, WindowingModule};
 use windows::Windows;
 use winit::{
     application::ApplicationHandler,
@@ -57,7 +57,7 @@ pub struct WinitModule;
 impl Module for WinitModule {
     fn setup(self, app: &mut magma_app::App) {
         app.set_runner(winit_event_loop);
-        app.add_module(WindowModule);
+        app.add_module(WindowingModule);
 
         // default event handling
         app.add_event_systems::<WindowCloseRequested>(&[(
