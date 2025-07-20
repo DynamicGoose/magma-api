@@ -5,7 +5,7 @@ use magma_windowing::{window_event::*, *};
 #[test]
 fn create_window() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
     app.world
@@ -25,7 +25,7 @@ fn create_window() {
 #[test]
 fn resize_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
@@ -44,7 +44,7 @@ fn resize_event() {
 #[test]
 fn redraw_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     // push event
     app.world
@@ -57,7 +57,7 @@ fn redraw_event() {
 #[test]
 fn window_created_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
@@ -72,7 +72,7 @@ fn window_created_event() {
 #[test]
 fn close_requested_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
@@ -87,7 +87,7 @@ fn close_requested_event() {
 #[test]
 fn closed_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
@@ -102,7 +102,7 @@ fn closed_event() {
 #[test]
 fn destroyed_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     app.world.create_entity((Window::new(),)).unwrap();
 
@@ -117,7 +117,7 @@ fn destroyed_event() {
 #[test]
 fn cursor_moved_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
@@ -135,7 +135,7 @@ fn cursor_moved_event() {
 #[test]
 fn cursor_entered_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
@@ -150,7 +150,7 @@ fn cursor_entered_event() {
 #[test]
 fn cursor_left_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
@@ -165,7 +165,7 @@ fn cursor_left_event() {
 #[test]
 fn focused_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
@@ -183,7 +183,7 @@ fn focused_event() {
 #[test]
 fn occluded_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
@@ -198,7 +198,7 @@ fn occluded_event() {
 #[test]
 fn filednd_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
@@ -213,7 +213,7 @@ fn filednd_event() {
 #[test]
 fn moved_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
@@ -231,7 +231,7 @@ fn moved_event() {
 #[test]
 fn theme_changed_event() {
     let mut app = App::new();
-    app.add_module(WindowModule);
+    app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
 

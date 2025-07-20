@@ -6,10 +6,6 @@ fn main() {
     let mut app = App::new();
     app.add_module(WinitModule);
     app.add_systems(
-        SystemType::Startup,
-        &[(print_monitors, "print_monitors", &[])],
-    );
-    app.add_systems(
         SystemType::Update,
         &[
             (close_windows, "close_windows", &["open_windows"]),

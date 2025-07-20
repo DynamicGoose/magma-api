@@ -34,13 +34,6 @@
 
             LD_LIBRARY_PATH = "${libPath}";
             RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
-
-            shellHook = ''
-              export IN_NIX_DEVELOP=1
-              export NIX_ENV_NAME=magma-api
-              ${pkgs.zsh}/bin/zsh
-              exit
-            '';
           };
       });
     };
