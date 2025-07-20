@@ -23,7 +23,7 @@ You will be able to use this in combination with the upcoming graphical editor f
     - [x] backend for magma_window
     - [ ] backend for magma_input
 - **magma_render:** Rendering system
-    - [ ] [FeuFeu](https://codeberg.org/DynamicGoose/feufeu) rendering library based on [wgpu](https://wgpu.rs/)
+    - [x] [FeuFeu](https://codeberg.org/DynamicGoose/feufeu) rendering library based on [wgpu](https://wgpu.rs/)
     - [ ] Vertex/Voxel hybrid renderer
 - **magma_asset:** Asset loading
     - [ ] load glTF models
