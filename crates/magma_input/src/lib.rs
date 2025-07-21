@@ -1,9 +1,15 @@
 use magma_app::module::Module;
 
+pub use button_map::ButtonMap;
 pub use button_state::ButtonState;
 
-use crate::input_event::{KeyboardInput, MouseButtonInput, MouseMotionInput, MouseScrollInput};
+use crate::{
+    input_event::{KeyboardInput, MouseButtonInput, MouseMotionInput, MouseScrollInput},
+    keyboard::KeyCode,
+    mouse::MouseButton,
+};
 
+mod button_map;
 mod button_state;
 /// Events emmited by input devices
 pub mod input_event;
@@ -21,5 +27,12 @@ impl Module for InputModule {
         app.register_event::<MouseButtonInput>();
         app.register_event::<MouseScrollInput>();
         app.register_event::<MouseMotionInput>();
+
+        app.world
+            .add_resource(ButtonMap::<KeyCode>::default())
+            .unwrap();
+        app.world
+            .add_resource(ButtonMap::<MouseButton>::default())
+            .unwrap();
     }
 }

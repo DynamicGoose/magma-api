@@ -1,4 +1,5 @@
 /// Mouse buttons
+#[derive(Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Hash, Debug)]
 pub enum MouseButton {
     Left,
     Right,

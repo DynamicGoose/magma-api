@@ -1,4 +1,5 @@
 /// The names of keyboard keys
+#[derive(Clone, Copy, PartialEq, PartialOrd, Ord, Eq, Hash, Debug)]
 pub enum Key {
     Character(&'static str),
     Alt,
@@ -310,6 +311,7 @@ pub enum Key {
 }
 
 /// Possible key codes
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum KeyCode {
     Backquote,
     Backslash,
