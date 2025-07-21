@@ -27,8 +27,6 @@ pub struct MouseButtonInput {
     pub button: MouseButton,
     /// The current state of the button
     pub state: ButtonState,
-    /// Sometimes a key being held down for a period of time causes it to be repeated. This will be true if that is the case.
-    pub repeat: bool,
     /// The window which emmited the event
     pub window: Entity,
 }
@@ -49,6 +47,4 @@ pub struct MouseScrollInput {
 pub struct MouseMotionInput {
     /// The movement delta
     pub delta: Vec2,
-    /// The window which emmited the event
-    pub window: Entity,
 }

@@ -39,7 +39,6 @@ fn mouse_button_input() {
         .push_event(MouseButtonInput {
             button: magma_input::mouse::MouseButton::Left,
             state: magma_input::ButtonState::Pressed,
-            repeat: false,
             window,
         })
         .unwrap();
@@ -70,15 +69,11 @@ fn mouse_motion_input() {
     let mut app = App::new();
     app.add_module(InputModule);
 
-    app.world.register_component::<DummyWindow>();
-    let window = app.world.create_entity((DummyWindow,)).unwrap();
-
     app.world
         .get_resource_mut::<Events>()
         .unwrap()
         .push_event(MouseMotionInput {
             delta: magma_math::Vec2::new(-1.4, 3.3),
-            window,
         })
         .unwrap();
 }

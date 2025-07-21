@@ -1,6 +1,6 @@
 [package]
 name = "magma_input"
-version = "0.1.0-alpha"
+version = "0.1.0-alpha.1"
 edition = "2024"
 description = "Part of the Magma-API, which is the API of the Magma3D game engine. This is responsable for handling user input."
 homepage = "https://dynamicgoose.github.io/magma3d-engine/"

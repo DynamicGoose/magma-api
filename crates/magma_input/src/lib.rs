@@ -7,6 +7,7 @@ use crate::{
     input_event::{KeyboardInput, MouseButtonInput, MouseMotionInput, MouseScrollInput},
     keyboard::KeyCode,
     mouse::MouseButton,
+    systems::{update_keyboard_resource, update_mouse_resource},
 };
 
 mod button_map;
@@ -17,6 +18,7 @@ pub mod input_event;
 pub mod keyboard;
 /// Mouse specific types
 pub mod mouse;
+mod systems;
 
 /// The input module for the app
 pub struct InputModule;
@@ -27,6 +29,18 @@ impl Module for InputModule {
         app.register_event::<MouseButtonInput>();
         app.register_event::<MouseScrollInput>();
         app.register_event::<MouseMotionInput>();
+        app.add_event_systems::<KeyboardInput>(&[(
+            update_keyboard_resource,
+            "keyboard_resource",
+            &[],
+        )])
+        .unwrap();
+        app.add_event_systems::<MouseButtonInput>(&[(
+            update_mouse_resource,
+            "mouse_resource",
+            &[],
+        )])
+        .unwrap();
 
         app.world
             .add_resource(ButtonMap::<KeyCode>::default())
