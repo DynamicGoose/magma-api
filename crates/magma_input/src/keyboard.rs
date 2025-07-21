@@ -1,3 +1,4 @@
+/// The names of keyboard keys
 pub enum Key {
     Character(&'static str),
     Alt,
@@ -308,6 +309,7 @@ pub enum Key {
     F35,
 }
 
+/// Possible key codes
 pub enum KeyCode {
     Backquote,
     Backslash,

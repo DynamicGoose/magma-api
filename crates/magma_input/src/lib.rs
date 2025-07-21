@@ -5,10 +5,14 @@ pub use button_state::ButtonState;
 use crate::input_event::{KeyboardInput, MouseButtonInput, MouseMotionInput, MouseScrollInput};
 
 mod button_state;
+/// Events emmited by input devices
 pub mod input_event;
+/// Keyboard specific types
 pub mod keyboard;
+/// Mouse specific types
 pub mod mouse;
 
+/// The input module for the app
 pub struct InputModule;
 
 impl Module for InputModule {
