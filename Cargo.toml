@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT"
 description = "API of the Magma3D game engine"
 homepage = "https://dynamicgoose.github.io/magma3d-engine/"
-repository = "https://github.com/DynamicGoose/magma-api"
+repository = "https://codeberg.org/DynamicGoose/magma-api"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
