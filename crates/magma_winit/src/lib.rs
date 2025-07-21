@@ -34,6 +34,7 @@ fn close_windows(world: &World) {
 */
 
 use magma_app::{App, events::Events, module::Module};
+use magma_input::InputModule;
 use magma_input::input_event::{
     KeyboardInput, MouseButtonInput, MouseMotionInput, MouseScrollInput,
 };
@@ -61,6 +62,7 @@ impl Module for WinitModule {
     fn setup(self, app: &mut magma_app::App) {
         app.set_runner(winit_event_loop);
         app.add_module(WindowingModule);
+        app.add_module(InputModule);
 
         // default event handling
         app.add_event_systems::<WindowCloseRequested>(&[(
