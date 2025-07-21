@@ -95,4 +95,19 @@ impl<T: Copy + Eq + Hash> ButtonMap<T> {
     pub fn all_just_released(&self, inputs: impl IntoIterator<Item = T>) -> bool {
         inputs.into_iter().all(|t| self.just_released(t))
     }
+
+    /// Get every pressed `input`.
+    pub fn get_pressed(&self) -> impl ExactSizeIterator<Item = &T> {
+        self.pressed.iter()
+    }
+
+    /// Get every just pressed `input`.
+    pub fn get_just_pressed(&self) -> impl ExactSizeIterator<Item = &T> {
+        self.just_pressed.iter()
+    }
+
+    /// Get every just released `input`.
+    pub fn get_just_released(&self) -> impl ExactSizeIterator<Item = &T> {
+        self.just_released.iter()
+    }
 }

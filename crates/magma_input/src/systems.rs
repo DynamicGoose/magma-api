@@ -8,6 +8,12 @@ use crate::{
 };
 
 pub fn update_keyboard_resource(world: &World) {
+    // clear before processing new events
+    world
+        .get_resource_mut::<ButtonMap<KeyCode>>()
+        .unwrap()
+        .clear();
+
     world
         .get_resource::<Events>()
         .unwrap()
@@ -29,6 +35,12 @@ pub fn update_keyboard_resource(world: &World) {
 }
 
 pub fn update_mouse_resource(world: &World) {
+    // clear before processing new events
+    world
+        .get_resource_mut::<ButtonMap<MouseButton>>()
+        .unwrap()
+        .clear();
+
     world
         .get_resource::<Events>()
         .unwrap()
