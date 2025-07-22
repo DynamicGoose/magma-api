@@ -17,6 +17,8 @@
                 libGL
                 libxkbcommon
                 wayland
+                vulkan-tools
+                vulkan-loader
                 alsa-lib
               ];
           in
@@ -25,6 +27,7 @@
               rustc
               cargo
               gcc
+              lld
               rust-analyzer
               rustfmt
               clippy

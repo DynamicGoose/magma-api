@@ -80,9 +80,18 @@ impl Module for WinitModule {
     }
 }
 
-struct WrappedApp {
+pub struct WrappedApp {
     app: App,
     windows: Windows,
+}
+
+impl WrappedApp {
+    pub fn new(app: App) -> Self {
+        Self {
+            app,
+            windows: Windows::new(),
+        }
+    }
 }
 
 impl ApplicationHandler for WrappedApp {
@@ -1627,9 +1636,6 @@ fn winit_event_loop(app: App) {
     // set up winit event loop
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
-    let mut app = WrappedApp {
-        app,
-        windows: Windows::new(),
-    };
+    let mut app = WrappedApp::new(app);
     event_loop.run_app(&mut app).unwrap();
 }
