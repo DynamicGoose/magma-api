@@ -1,0 +1,13 @@
+[package]
+name = "magma_render"
+version = "0.1.0-alpha"
+edition = "2024"
+description = "Partt of the Magma-API. Rendering Capability for the engine."
+homepage = "https://dynamicgoose.github.io/magma3d-engine/"
+license = "MIT"
+repository = "https://codeberg.org/DynamicGoose/magma-api"
+
+[dependencies]
+feufeu = "0.1.0-alpha.2"
+magma_app = { path = "../magma_app", version = "0.2.0-alpha.3" }
+magma_math = { path = "../magma_math", version = "0.1.0-alpha" }

@@ -2,10 +2,10 @@
 name = "magma_winit"
 version = "0.1.0-alpha.7"
 edition = "2024"
-description = "Part of the Magma-API, which is the API of the Magma3D game engine. A winit windowing backend implementation."
+description = "Part of the Magma-API, which is the API of the Magma3D game engine. A winit windowing and input backend implementation."
 homepage = "https://dynamicgoose.github.io/magma3d-engine/"
 license = "MIT"
-repository = "https://codeberg.com/DynamicGoose/magma-api"
+repository = "https://codeberg.org/DynamicGoose/magma-api"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
