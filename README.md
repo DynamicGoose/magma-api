@@ -16,12 +16,12 @@ You will be able to use this in combination with the upcoming graphical editor f
     - [x] Handle window events
     - [x] Add `Window` components to entities to easily create windows
 - **magma_input:** Backend-agnostic input system
-    - [ ] Mouse & keyboard input support
+    - [x] Mouse & keyboard input support
     - [ ] Gamepad & controller support
     - [ ] VR input support
 - **magma_winit:** Winit integration for magma_window and magma_input
     - [x] backend for magma_window
-    - [ ] backend for magma_input
+    - [x] backend for magma_input
 - **magma_render:** Rendering system
     - [x] [FeuFeu](https://codeberg.org/DynamicGoose/feufeu) rendering library based on [wgpu](https://wgpu.rs/)
     - [ ] Vertex/Voxel hybrid renderer
