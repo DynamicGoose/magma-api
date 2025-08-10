@@ -7,37 +7,37 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
 };
 
+mod synchronization;
+
 pub struct RenderModule;
 
 impl Module for RenderModule {
     fn setup(self, app: &mut magma_app::App) {
         app.add_module(WinitModule);
         app.set_runner(rendering_update_loop);
+
+        app.world.add_resource(RenderState::default()).unwrap();
+        app.world.add_resource(Renderer(default_renderer)).unwrap();
     }
 }
 
 pub struct RenderApp {
-    winit_app: WrappedApp,
-    render_state: RenderState<'static, 'static>,
-    renderer: fn(&RenderState),
+    app: WrappedApp,
 }
 
 impl RenderApp {
-    pub fn new(app: App, init: fn(&mut RenderState), renderer: fn(&RenderState)) -> Self {
-        let mut app = Self {
-            winit_app: WrappedApp::new(app),
-            render_state: RenderState::default(),
-            renderer,
-        };
-        init(&mut app.render_state);
-
-        app
+    pub fn new(app: App) -> Self {
+        Self {
+            app: WrappedApp::new(app),
+        }
     }
 }
 
+pub struct Renderer(fn(&RenderState));
+
 impl ApplicationHandler for RenderApp {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        self.winit_app.resumed(event_loop);
+        self.app.resumed(event_loop);
     }
 
     fn window_event(
@@ -46,7 +46,7 @@ impl ApplicationHandler for RenderApp {
         window_id: winit::window::WindowId,
         event: winit::event::WindowEvent,
     ) {
-        self.winit_app.window_event(event_loop, window_id, event);
+        self.app.window_event(event_loop, window_id, event);
     }
 
     fn device_event(
@@ -55,12 +55,17 @@ impl ApplicationHandler for RenderApp {
         device_id: winit::event::DeviceId,
         event: winit::event::DeviceEvent,
     ) {
-        self.winit_app.device_event(event_loop, device_id, event);
+        self.app.device_event(event_loop, device_id, event);
     }
 
     fn about_to_wait(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        self.winit_app.about_to_wait(event_loop);
-        (self.renderer)(&self.render_state);
+        // sync
+        // execute update and render and update on seperate threads
+        self.app.about_to_wait(event_loop);
+
+        (self.app.app.world.get_resource::<Renderer>().unwrap().0)(
+            &self.app.app.world.get_resource::<RenderState>().unwrap(),
+        );
     }
 }
 
@@ -68,7 +73,7 @@ fn rendering_update_loop(app: App) {
     app.world.create_entity((Window::new(),)).unwrap();
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
-    let mut app = RenderApp::new(app, init_default_renderer, default_renderer);
+    let mut app = RenderApp::new(app);
     event_loop.run_app(&mut app).unwrap();
 }
 

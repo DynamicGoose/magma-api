@@ -81,7 +81,7 @@ impl Module for WinitModule {
 }
 
 pub struct WrappedApp {
-    app: App,
+    pub app: App,
     windows: Windows,
 }
 
