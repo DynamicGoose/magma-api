@@ -1,14 +1,21 @@
-use feufeu::RenderState;
-use magma_app::{App, module::Module, rayon::join};
+use std::time::Instant;
+
+use feufeu::{
+    RenderState,
+    wgpu::{Surface, SurfaceConfiguration, SurfaceTargetUnsafe},
+};
+use magma_app::{App, entities::Entity, module::Module, rayon::join};
 use magma_windowing::Window;
 use magma_winit::{WinitModule, WrappedApp};
 use winit::{
     application::ApplicationHandler,
     event_loop::{ControlFlow, EventLoop},
+    raw_window_handle::{HasDisplayHandle, HasWindowHandle},
 };
 
-use crate::sync_module::SyncModule;
+use crate::{render_stages::background::BackgroundStage, sync_module::SyncModule};
 
+pub mod render_stages;
 pub mod sync_component_module;
 pub mod sync_module;
 
@@ -47,6 +54,13 @@ impl Renderer {
 impl ApplicationHandler for RenderApp {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         self.app.resumed(event_loop);
+        self.app
+            .app
+            .world
+            .get_resource_mut::<RenderState>()
+            .unwrap()
+            .init_stage::<BackgroundStage>()
+            .unwrap();
     }
 
     fn window_event(
@@ -69,10 +83,65 @@ impl ApplicationHandler for RenderApp {
 
     fn about_to_wait(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         self.app.winit_update(event_loop);
+        let window_entity: Entity = self.app.app.world.query::<(Window,)>().unwrap()[0].into();
+        let window = self
+            .app
+            .windows
+            .winit_windows
+            .get(
+                self.app
+                    .windows
+                    .entity_to_window
+                    .get(&window_entity)
+                    .unwrap(),
+            )
+            .unwrap();
+        {
+            let render_state = self.app.app.world.get_resource::<RenderState>().unwrap();
+            render_state
+                .render_world
+                .query::<(Surface, SurfaceConfiguration)>()
+                .unwrap()
+                .iter()
+                .for_each(|e| e.delete());
+            let surface = unsafe {
+                render_state
+                    .get_instance()
+                    .create_surface_unsafe(SurfaceTargetUnsafe::RawHandle {
+                        raw_display_handle: window.display_handle().unwrap().as_raw(),
+                        raw_window_handle: window.window_handle().unwrap().as_raw(),
+                    })
+                    .unwrap()
+            };
+            let surface_caps = surface.get_capabilities(render_state.get_adapter());
+            let surface_format = surface_caps
+                .formats
+                .iter()
+                .find(|f| f.is_srgb())
+                .copied()
+                .unwrap_or(surface_caps.formats[0]);
+            let surface_config = feufeu::wgpu::SurfaceConfiguration {
+                usage: feufeu::wgpu::TextureUsages::RENDER_ATTACHMENT,
+                format: surface_format,
+                width: window.inner_size().width,
+                height: window.inner_size().height,
+                present_mode: surface_caps.present_modes[0],
+                alpha_mode: surface_caps.alpha_modes[0],
+                view_formats: vec![],
+                desired_maximum_frame_latency: 2,
+            };
+            surface.configure(render_state.get_device(), &surface_config);
+
+            render_state
+                .render_world
+                .create_entity((surface, surface_config))
+                .unwrap();
+        }
+
         join(
             || self.app.app.update(),
             || {
-                self.app.app.world.get_resource::<Renderer>().unwrap().0(
+                (self.app.app.world.get_resource::<Renderer>().unwrap().0)(
                     &self.app.app.world.get_resource::<RenderState>().unwrap(),
                 )
             },
@@ -88,6 +157,11 @@ fn rendering_update_loop(app: App) {
     event_loop.run_app(&mut app).unwrap();
 }
 
-fn default_renderer(_render_state: &RenderState) {
-    println!("ha");
+fn default_renderer(render_state: &RenderState) {
+    let now = Instant::now();
+    render_state.run_stage::<BackgroundStage>().unwrap();
+    println!(
+        "{}",
+        1.0 / ((1.0 / 1000000.0) * now.elapsed().as_micros() as f32)
+    );
 }

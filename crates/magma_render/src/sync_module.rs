@@ -43,14 +43,6 @@ fn sync_entities(world: &World) {
     let mut map = world.get_resource_mut::<EntityRenderEntityMap>().unwrap();
     let render_state = world.get_resource::<RenderState>().unwrap();
 
-    // clear render world
-    render_state
-        .render_world
-        .query::<(RenderEntity,)>()
-        .unwrap()
-        .iter()
-        .for_each(|e| e.delete());
-
     // Sync new entities to render world.
     world
         .query::<(SyncToRenderWorld,)>()
@@ -124,14 +116,14 @@ impl EntityRenderEntityMap {
         }
     }
 
-    fn delete_through_render_entity(&mut self, render_entity: &Entity) {
+    pub fn delete_through_render_entity(&mut self, render_entity: &Entity) {
         let entity = self.render_entity_to_entity.get(render_entity).unwrap();
 
         self.entity_to_render_entity.remove(entity);
         self.render_entity_to_entity.remove(render_entity);
     }
 
-    fn insert(&mut self, entity: Entity, render_entity: Entity) {
+    pub fn insert(&mut self, entity: Entity, render_entity: Entity) {
         self.entity_to_render_entity.insert(entity, render_entity);
         self.render_entity_to_entity.insert(render_entity, entity);
     }

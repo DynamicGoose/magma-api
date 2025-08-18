@@ -8,12 +8,12 @@ license = "MIT"
 repository = "https://codeberg.org/DynamicGoose/magma-api"
 
 [dependencies]
-feufeu = "0.1.0-alpha.4"
+feufeu = "0.1.0-beta"
 magma_app = { path = "../magma_app", version = "0.2.0-alpha.3" }
 magma_winit = { path = "../magma_winit", version = "0.1.0-alpha.8" }
 magma_windowing = { path = "../magma_windowing", version = "0.1.0-alpha" }
 magma_math = { path = "../magma_math", version = "0.1.0-alpha" }
-winit = { version = "0.30.11", features = ["rwh_05"] }
+winit = { version = "0.30.12", features = ["rwh_06"] }
 
 # needs to run on main thread bc winit
 [[test]]

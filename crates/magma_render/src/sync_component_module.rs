@@ -1,11 +1,18 @@
 use std::marker::PhantomData;
 
 use feufeu::RenderState;
-use magma_app::{World, module::Module};
+use magma_app::{
+    World,
+    entities::Entity,
+    module::Module,
+    rayon::iter::{IntoParallelRefIterator, ParallelIterator},
+};
 
 use crate::sync_module::{EntityRenderEntityMap, SyncComponent, SyncSystems, SyncToRenderWorld};
 
 pub struct SyncComponentModule<C: SyncComponent>(PhantomData<C>);
+
+struct EntityMap<C: SyncComponent>(Vec<Entity>, PhantomData<C>);
 
 impl<C: SyncComponent + 'static> Module for SyncComponentModule<C> {
     fn setup(self, app: &mut magma_app::App) {
@@ -16,6 +23,10 @@ impl<C: SyncComponent + 'static> Module for SyncComponentModule<C> {
             .register_component::<C::Out>();
 
         app.world
+            .add_resource(EntityMap::<C>(vec![], PhantomData::default()))
+            .unwrap();
+
+        app.world
             .get_resource_mut::<SyncSystems>()
             .unwrap()
             .push(sync_component_to_render_world_system::<C>);
@@ -23,11 +34,15 @@ impl<C: SyncComponent + 'static> Module for SyncComponentModule<C> {
 }
 
 fn sync_component_to_render_world_system<C: SyncComponent + 'static>(world: &World) {
+    let mut map = world.get_resource_mut::<EntityMap<C>>().unwrap();
     world
         .query::<(SyncToRenderWorld, C)>()
         .unwrap()
         .iter()
         .for_each(|entity| {
+            if !map.0.contains(&entity.into()) {
+                map.0.push(entity.into());
+            }
             let render_entity = world
                 .get_resource_mut::<EntityRenderEntityMap>()
                 .unwrap()
@@ -45,4 +60,31 @@ fn sync_component_to_render_world_system<C: SyncComponent + 'static>(world: &Wor
                 )
                 .unwrap();
         });
+    // sync deleted components
+    if map.0.len() > world.query::<(SyncToRenderWorld, C)>().unwrap().len() {
+        map.0 = map
+            .0
+            .par_iter()
+            .filter_map(|entity| match world.get_component::<C>(*entity) {
+                Ok(_) => Some(*entity),
+                Err(_) => {
+                    world
+                        .get_resource::<RenderState>()
+                        .unwrap()
+                        .render_world
+                        .delete_component::<C::Out>(
+                            world
+                                .get_resource::<EntityRenderEntityMap>()
+                                .unwrap()
+                                .entity_to_render_entity
+                                .get(entity)
+                                .unwrap()
+                                .to_owned(),
+                        )
+                        .unwrap();
+                    None
+                }
+            })
+            .collect::<Vec<Entity>>();
+    }
 }

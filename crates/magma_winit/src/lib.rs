@@ -52,7 +52,7 @@ use winit::{
 };
 
 mod systems;
-mod windows;
+pub mod windows;
 
 /**
 The [`WinitModule`] adds winit as a backend for [magma_windowing](https://crates.io/crates/magma_windowing). It also automatically creates one window on application start.
@@ -83,7 +83,7 @@ impl Module for WinitModule {
 
 pub struct WrappedApp {
     pub app: App,
-    windows: Windows,
+    pub windows: Windows,
 }
 
 impl WrappedApp {
