@@ -44,6 +44,7 @@ use magma_windowing::window::WindowTheme;
 use magma_windowing::{ClosingWindow, Monitor, PrimaryMonitor, window_event::*};
 use magma_windowing::{Window, WindowingModule};
 use windows::Windows;
+use winit::event_loop::ActiveEventLoop;
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
@@ -1544,6 +1545,15 @@ impl ApplicationHandler for WrappedApp {
     }
 
     fn about_to_wait(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        // update winit backend
+        self.winit_update(event_loop);
+        // update the app
+        self.app.update();
+    }
+}
+
+impl WrappedApp {
+    pub fn winit_update(&mut self, event_loop: &ActiveEventLoop) {
         // create winit windows for new window components
         self.app
             .world
@@ -1624,9 +1634,6 @@ impl ApplicationHandler for WrappedApp {
                     })
                     .unwrap();
             });
-
-        // update the app
-        self.app.update();
     }
 }
 
