@@ -13,7 +13,10 @@ use winit::{
     raw_window_handle::{HasDisplayHandle, HasWindowHandle},
 };
 
-use crate::{render_stages::background::BackgroundStage, sync_module::SyncModule};
+use crate::{
+    render_stages::background::BackgroundStage,
+    sync_module::{EntityRenderEntityMap, SyncModule, SyncToRenderWorld},
+};
 
 pub mod render_stages;
 pub mod sync_component_module;
@@ -83,60 +86,98 @@ impl ApplicationHandler for RenderApp {
 
     fn about_to_wait(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         self.app.winit_update(event_loop);
-        let window_entity: Entity = self.app.app.world.query::<(Window,)>().unwrap()[0].into();
-        let window = self
+        self.app
             .app
-            .windows
-            .winit_windows
-            .get(
-                self.app
-                    .windows
-                    .entity_to_window
-                    .get(&window_entity)
-                    .unwrap(),
-            )
-            .unwrap();
-        {
-            let render_state = self.app.app.world.get_resource::<RenderState>().unwrap();
-            render_state
-                .render_world
-                .query::<(Surface, SurfaceConfiguration)>()
-                .unwrap()
-                .iter()
-                .for_each(|e| e.delete());
-            let surface = unsafe {
-                render_state
-                    .get_instance()
-                    .create_surface_unsafe(SurfaceTargetUnsafe::RawHandle {
-                        raw_display_handle: window.display_handle().unwrap().as_raw(),
-                        raw_window_handle: window.window_handle().unwrap().as_raw(),
-                    })
-                    .unwrap()
-            };
-            let surface_caps = surface.get_capabilities(render_state.get_adapter());
-            let surface_format = surface_caps
-                .formats
-                .iter()
-                .find(|f| f.is_srgb())
-                .copied()
-                .unwrap_or(surface_caps.formats[0]);
-            let surface_config = feufeu::wgpu::SurfaceConfiguration {
-                usage: feufeu::wgpu::TextureUsages::RENDER_ATTACHMENT,
-                format: surface_format,
-                width: window.inner_size().width,
-                height: window.inner_size().height,
-                present_mode: surface_caps.present_modes[0],
-                alpha_mode: surface_caps.alpha_modes[0],
-                view_formats: vec![],
-                desired_maximum_frame_latency: 2,
-            };
-            surface.configure(render_state.get_device(), &surface_config);
+            .world
+            .query::<(Window,)>()
+            .unwrap()
+            .iter()
+            .for_each(|window_entity| {
+                let mut map = self
+                    .app
+                    .app
+                    .world
+                    .get_resource_mut::<EntityRenderEntityMap>()
+                    .unwrap();
+                let render_state = self.app.app.world.get_resource::<RenderState>().unwrap();
+                match map.entity_to_render_entity.get(&window_entity.into()) {
+                    Some(_) => (),
+                    None => {
+                        window_entity
+                            .assign_components((SyncToRenderWorld,))
+                            .unwrap();
+                        let window_entity: Entity = window_entity.into();
+                        let window = self
+                            .app
+                            .windows
+                            .winit_windows
+                            .get(
+                                self.app
+                                    .windows
+                                    .entity_to_window
+                                    .get(&window_entity)
+                                    .unwrap(),
+                            )
+                            .unwrap();
+                        render_state
+                            .render_world
+                            .query::<(Surface, SurfaceConfiguration)>()
+                            .unwrap()
+                            .iter()
+                            .for_each(|e| e.delete());
+                        let surface = unsafe {
+                            render_state
+                                .get_instance()
+                                .create_surface_unsafe(SurfaceTargetUnsafe::RawHandle {
+                                    raw_display_handle: window.display_handle().unwrap().as_raw(),
+                                    raw_window_handle: window.window_handle().unwrap().as_raw(),
+                                })
+                                .unwrap()
+                        };
+                        let surface_caps = surface.get_capabilities(render_state.get_adapter());
+                        let surface_format = surface_caps
+                            .formats
+                            .iter()
+                            .find(|f| f.is_srgb())
+                            .copied()
+                            .unwrap_or(surface_caps.formats[0]);
+                        let surface_config = feufeu::wgpu::SurfaceConfiguration {
+                            usage: feufeu::wgpu::TextureUsages::RENDER_ATTACHMENT,
+                            format: surface_format,
+                            width: window.inner_size().width,
+                            height: window.inner_size().height,
+                            present_mode: surface_caps.present_modes[0],
+                            alpha_mode: surface_caps.alpha_modes[0],
+                            view_formats: vec![],
+                            desired_maximum_frame_latency: 2,
+                        };
+                        surface.configure(render_state.get_device(), &surface_config);
 
-            render_state
-                .render_world
-                .create_entity((surface, surface_config))
-                .unwrap();
-        }
+                        let render_entity = render_state
+                            .render_world
+                            .create_entity((sync_module::RenderEntity, surface, surface_config))
+                            .unwrap();
+                        map.insert(window_entity, render_entity);
+                    }
+                }
+
+                // render_state
+                //     .render_world
+                //     .query::<(Surface, SurfaceConfiguration)>()
+                //     .unwrap()
+                //     .iter()
+                //     .for_each(|render_entity| {
+                //         let entity = map
+                //             .render_entity_to_entity
+                //             .get(&render_entity.into())
+                //             .unwrap()
+                //             .to_owned();
+                //         if self.app.app.world.get_component::<Window>(entity).is_err() {
+                //             map.delete_through_render_entity(&render_entity.into());
+                //             render_entity.delete();
+                //         }
+                //     });
+            });
 
         join(
             || self.app.app.update(),
