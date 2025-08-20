@@ -103,6 +103,7 @@ impl SyncSystems {
 
 pub struct RenderEntity;
 
+#[derive(Debug)]
 pub(crate) struct EntityRenderEntityMap {
     pub entity_to_render_entity: HashMap<Entity, Entity>,
     pub render_entity_to_entity: HashMap<Entity, Entity>,
