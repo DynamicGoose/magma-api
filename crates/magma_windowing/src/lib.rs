@@ -5,6 +5,8 @@ use window_event::*;
 
 /// ECS Monitor representation
 pub mod monitor;
+/// Thread safe window handles
+pub mod raw_handle;
 /// Provides the [`Window`] component and related types.
 pub mod window;
 /// Window related events
