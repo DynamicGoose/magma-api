@@ -4,6 +4,7 @@ use magma_app::{World, entities::Entity};
 use magma_math::IVec2;
 use magma_windowing::{
     Monitor, PrimaryMonitor, Window,
+    raw_handle::WindowWrapper,
     window::{
         MonitorSelection, VideoModeSelection, WindowMode, WindowPosition, WindowResolution,
         WindowTheme,
@@ -20,7 +21,7 @@ use winit::{
 pub struct Windows {
     pub window_to_entity: HashMap<WindowId, Entity>,
     pub entity_to_window: HashMap<Entity, WindowId>,
-    pub winit_windows: HashMap<WindowId, WinitWindow>,
+    pub winit_windows: HashMap<WindowId, WindowWrapper<WinitWindow>>,
 }
 
 impl Windows {
@@ -258,7 +259,8 @@ impl Windows {
         // add window to self
         let window_id = winit_window.id();
 
-        self.winit_windows.insert(window_id, winit_window);
+        self.winit_windows
+            .insert(window_id, WindowWrapper::new(winit_window));
         self.window_to_entity.insert(window_id, entity);
         self.entity_to_window.insert(entity, window_id);
 
