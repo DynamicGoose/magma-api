@@ -1,12 +1,11 @@
-use feufeu::{
-    RenderStage,
-    wgpu::{Surface, SurfaceConfiguration},
-};
+use feufeu::RenderStage;
+
+use crate::extracted_windows::ExtractedWindows;
 
 pub struct BackgroundStage;
 
 impl RenderStage for BackgroundStage {
-    fn init(render_state: &mut feufeu::RenderState) {}
+    fn init(_render_state: &mut feufeu::RenderState) {}
 
     fn run(render_state: &feufeu::RenderState) {
         let mut encoder = render_state.get_device().create_command_encoder(
@@ -16,12 +15,12 @@ impl RenderStage for BackgroundStage {
         );
         let outputs = render_state
             .render_world
-            .query::<(Surface,)>()
+            .get_resource::<ExtractedWindows>()
             .unwrap()
-            .iter()
-            .map(|surface_entity| {
+            .iter_windows()
+            .map(|extracted_window| {
                 // println!("entity: {}", surface_entity.id());
-                let surface = surface_entity.get_component::<Surface>().unwrap();
+                let surface = &extracted_window.1;
                 let output = surface.get_current_texture().unwrap();
                 let view = output
                     .texture

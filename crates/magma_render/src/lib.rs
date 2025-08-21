@@ -2,7 +2,9 @@ use std::time::Instant;
 
 use feufeu::{RenderState, wgpu::Surface};
 use magma_app::{App, module::Module, rayon::join};
-use magma_windowing::{Window, raw_handle::RawHandleWrapper};
+use magma_windowing::{
+    ClosingWindow, Window, raw_handle::RawHandleWrapper, window_event::WindowClosed,
+};
 use magma_winit::{WinitModule, WrappedApp};
 use winit::{
     application::ApplicationHandler,
@@ -10,14 +12,20 @@ use winit::{
 };
 
 use crate::{
+    extracted_windows::{ExtractedWindow, ExtractedWindows},
     render_stages::background::BackgroundStage,
     sync_module::{EntityRenderEntityMap, RenderEntity, SyncModule, SyncToRenderWorld},
+    systems::drop_windows,
 };
 
 pub mod components;
+
+// this can be replaced by deleting entities through the purge_entity() method (magma_ecs 0.4.0)
+mod extracted_windows;
 pub mod render_stages;
 pub mod sync_component_module;
 pub mod sync_module;
+mod systems;
 
 pub struct RenderModule;
 
@@ -27,14 +35,22 @@ impl Module for RenderModule {
         app.set_runner(rendering_update_loop);
         app.world.add_resource(RenderState::default()).unwrap();
         app.world.add_resource(Renderer(default_renderer)).unwrap();
+        app.add_event_systems::<WindowClosed>(&[(drop_windows, "drop_windows", &[])])
+            .unwrap();
         app.add_module(SyncModule);
 
         let mut render_state = app.world.get_resource_mut::<RenderState>().unwrap();
 
         render_state
             .render_world
-            .register_component::<RawHandleWrapper>();
-        render_state.render_world.register_component::<Surface>();
+            .register_component::<ExtractedWindow>();
+        render_state
+            .render_world
+            .register_component::<ClosingWindow>();
+        render_state
+            .render_world
+            .add_resource(ExtractedWindows::new())
+            .unwrap();
     }
 }
 
@@ -158,14 +174,37 @@ impl ApplicationHandler for RenderApp {
 
                         let render_entity = render_state
                             .render_world
-                            .create_entity((RenderEntity, raw_handle, surface))
+                            .create_entity((RenderEntity, ExtractedWindow))
                             .unwrap();
 
-                        println!("render_entity: {}", render_entity.id());
+                        render_state
+                            .render_world
+                            .get_resource_mut::<ExtractedWindows>()
+                            .unwrap()
+                            .insert(window_entity.into(), render_entity, raw_handle, surface);
+
                         map.insert(window_entity.into(), render_entity);
                     }
                 }
             });
+
+        {
+            let render_state = self.app.app.world.get_resource::<RenderState>().unwrap();
+
+            render_state
+                .render_world
+                .query::<(ExtractedWindow, ClosingWindow)>()
+                .unwrap()
+                .iter()
+                .for_each(|render_entity| {
+                    render_state
+                        .render_world
+                        .get_resource_mut::<ExtractedWindows>()
+                        .unwrap()
+                        .remove_through_render_entity(&render_entity.into());
+                    render_entity.delete();
+                });
+        }
 
         join(
             || self.app.app.update(),
