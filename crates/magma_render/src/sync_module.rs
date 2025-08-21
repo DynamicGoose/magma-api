@@ -8,23 +8,23 @@ use magma_app::{
     rayon::iter::{IntoParallelRefIterator, ParallelIterator},
 };
 
+use crate::SyncSchedule;
+
 /// Module for syncing entities to the render world.
 pub struct SyncModule;
 
 impl Module for SyncModule {
     fn setup(self, app: &mut magma_app::App) {
         // add to new sync schedule, when that's ready
-        app.add_systems(
-            magma_app::SystemType::Update,
-            &[
-                (sync_entities, "render_sync_entities", &[]),
-                (
-                    sync_systems,
-                    "render_sync_systems",
-                    &["render_sync_entities"],
-                ),
-            ],
-        );
+        app.add_systems::<SyncSchedule>(&[
+            (sync_entities, "render_sync_entities", &[]),
+            (
+                sync_systems,
+                "render_sync_systems",
+                &["render_sync_entities"],
+            ),
+        ])
+        .unwrap();
         app.world.register_component::<SyncToRenderWorld>();
         app.world
             .add_resource(EntityRenderEntityMap::new())

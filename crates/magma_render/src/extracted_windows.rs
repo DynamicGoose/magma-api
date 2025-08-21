@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use feufeu::wgpu::Surface;
-use magma_app::{entities::Entity, rayon::iter::IntoParallelRefIterator};
+use magma_app::entities::Entity;
 use magma_windowing::raw_handle::RawHandleWrapper;
 
 pub struct ExtractedWindow;

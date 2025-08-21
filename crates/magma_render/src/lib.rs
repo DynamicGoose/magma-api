@@ -1,11 +1,16 @@
 use std::time::Instant;
 
-use feufeu::{RenderState, wgpu::Surface};
-use magma_app::{App, module::Module, rayon::join};
+use feufeu::RenderState;
+use magma_app::{
+    App, AppSchedule,
+    module::Module,
+    rayon::join,
+    schedule::{PostUpdate, PreUpdate, Startup, Update},
+};
 use magma_windowing::{
     ClosingWindow, Window, raw_handle::RawHandleWrapper, window_event::WindowClosed,
 };
-use magma_winit::{WinitModule, WrappedApp};
+use magma_winit::{WinitModule, WrappedApp, windows::Windows};
 use winit::{
     application::ApplicationHandler,
     event_loop::{ControlFlow, EventLoop},
@@ -37,6 +42,7 @@ impl Module for RenderModule {
         app.world.add_resource(Renderer(default_renderer)).unwrap();
         app.add_event_systems::<WindowClosed>(&[(drop_windows, "drop_windows", &[])])
             .unwrap();
+        app.register_schedule::<SyncSchedule>();
         app.add_module(SyncModule);
 
         let mut render_state = app.world.get_resource_mut::<RenderState>().unwrap();
@@ -123,20 +129,13 @@ impl ApplicationHandler for RenderApp {
                 match map.entity_to_render_entity.get(&window_entity.into()) {
                     Some(_) => (),
                     None => {
+                        let windows = self.app.app.world.get_resource::<Windows>().unwrap();
                         window_entity
                             .assign_components((SyncToRenderWorld,))
                             .unwrap();
-                        let window = self
-                            .app
-                            .windows
+                        let window = windows
                             .winit_windows
-                            .get(
-                                self.app
-                                    .windows
-                                    .entity_to_window
-                                    .get(&window_entity.into())
-                                    .unwrap(),
-                            )
+                            .get(windows.entity_to_window.get(&window_entity.into()).unwrap())
                             .unwrap();
 
                         let raw_handle = RawHandleWrapper::new(window);
@@ -206,8 +205,15 @@ impl ApplicationHandler for RenderApp {
                 });
         }
 
+        self.app.app.run_schedule::<SyncSchedule>().unwrap();
+
         join(
-            || self.app.app.update(),
+            || {
+                self.app.app.run_schedule::<PreUpdate>().unwrap();
+                self.app.app.run_schedule::<Update>().unwrap();
+                self.app.app.run_schedule::<PostUpdate>().unwrap();
+                self.app.app.process_events();
+            },
             || {
                 (self.app.app.world.get_resource::<Renderer>().unwrap().0)(
                     &self.app.app.world.get_resource::<RenderState>().unwrap(),
@@ -222,6 +228,7 @@ fn rendering_update_loop(app: App) {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
     let mut app = RenderApp::new(app);
+    app.app.app.run_schedule::<Startup>().unwrap();
     event_loop.run_app(&mut app).unwrap();
 }
 
@@ -233,3 +240,7 @@ fn default_renderer(render_state: &RenderState) {
         1.0 / ((1.0 / 1000000.0) * now.elapsed().as_micros() as f32)
     );
 }
+
+pub struct SyncSchedule;
+
+impl AppSchedule for SyncSchedule {}
