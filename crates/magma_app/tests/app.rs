@@ -1,6 +1,9 @@
 use std::time::Instant;
 
-use magma_app::{App, SystemType, World, events::Events};
+use magma_app::{
+    App, World,
+    schedule::{Startup, Update},
+};
 
 #[test]
 fn add_systems() {
@@ -13,14 +16,10 @@ fn add_systems() {
 
     app.world.add_resource(10_u32).unwrap();
 
-    app.add_systems(
-        SystemType::Startup,
-        &[(system_startup, "system_startup", &[])],
-    );
-    app.add_systems(
-        SystemType::Update,
-        &[(update_resource, "update_resource", &[])],
-    );
+    app.add_systems::<Startup>(&[(system_startup, "system_startup", &[])])
+        .unwrap();
+    app.add_systems::<Update>(&[(update_resource, "update_resource", &[])])
+        .unwrap();
     app.set_runner(test_runner);
     app.run();
 }
@@ -33,7 +32,8 @@ fn event_systems() {
         .unwrap();
     app.world.add_resource(10_u32).unwrap();
 
-    app.add_systems(SystemType::Update, &[(event_system, "event_system", &[])]);
+    app.add_systems::<Update>(&[(event_system, "event_system", &[])])
+        .unwrap();
 
     app.set_runner(test_runner);
     app.run();
@@ -67,16 +67,14 @@ fn update_resource(world: &World) {
 }
 
 fn event_system(world: &World) {
-    world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(Event)
-        .unwrap();
+    world.send_event(Event).unwrap();
 }
 
 fn test_runner(app: App) {
+    app.run_schedule::<Startup>().unwrap();
     for _ in 0..10 {
-        app.update();
+        app.run_schedule::<Update>().unwrap();
+        app.process_events();
     }
     assert_eq!(20, *app.world.get_resource::<u32>().unwrap());
 }
@@ -90,4 +88,5 @@ struct Rotation((i32, i32, i32));
 #[allow(dead_code)]
 struct Velocity((i32, i32, i32));
 
+#[derive(Clone)]
 struct Event;

@@ -7,9 +7,8 @@ use std::{
     collections::HashMap,
 };
 
-use error::EventError;
-use events::Events;
 use magma_ecs::{
+    error::EventError,
     rayon::iter::{IntoParallelRefIterator, ParallelIterator},
     systems::{Systems, dispatcher::Dispatcher},
 };
@@ -17,11 +16,18 @@ use module::Module;
 
 pub use magma_ecs;
 pub use magma_ecs::{World, entities, rayon, resources, systems};
+pub use schedule::AppSchedule;
+
+use crate::{
+    error::ScheduleError,
+    schedule::{PostUpdate, PreUpdate, Startup, Update},
+};
 
 pub mod error;
-pub mod events;
 /// Support for adding [`Module`]s
 pub mod module;
+/// The [`AppSchedule`] trait and default schedules.
+pub mod schedule;
 
 type SystemSlice = &'static [(fn(&World), &'static str, &'static [&'static str])];
 
@@ -30,8 +36,7 @@ pub struct App {
     pub world: World,
     runner: fn(App),
     modules: Vec<TypeId>,
-    startup_systems: (Systems, Dispatcher),
-    update_systems: (Systems, Dispatcher),
+    systems: HashMap<TypeId, (Systems, Dispatcher)>,
     event_systems: HashMap<TypeId, (Systems, Dispatcher)>,
 }
 
@@ -41,12 +46,15 @@ impl Default for App {
             world: Default::default(),
             runner: default_runner,
             modules: vec![],
-            startup_systems: Default::default(),
-            update_systems: Default::default(),
+            systems: Default::default(),
             event_systems: Default::default(),
         };
 
-        app.world.add_resource(Events::default()).unwrap();
+        app.register_schedule::<Startup>();
+        app.register_schedule::<PreUpdate>();
+        app.register_schedule::<Update>();
+        app.register_schedule::<PostUpdate>();
+
         app
     }
 }
@@ -86,50 +94,65 @@ impl App {
         }
     }
 
+    /// Register an [`AppSchedule`].
+    pub fn register_schedule<S: AppSchedule + 'static>(&mut self) {
+        self.systems.insert(TypeId::of::<S>(), Default::default());
+    }
+
+    /// Run an [`AppSchedule`].
+    pub fn run_schedule<S: AppSchedule + 'static>(&self) -> Result<(), ScheduleError> {
+        self.systems
+            .get(&TypeId::of::<S>())
+            .ok_or(ScheduleError::ScheduleNotRegistered)?
+            .1
+            .dispatch(&self.world);
+        Ok(())
+    }
+
     /**
     Add systems to the [`App`]'s [`World`]. Systems must take an immutable reference to [`World`].
+
+    # Errors
+
+    Returns an error, when the schedule isn't registered.
 
     # Example
 
     ```
-    use magma_app::{App, SystemType, World};
+    use magma_app::{App, World};
+    use magma_app::schedule::Startup;
 
     let mut app = App::new();
-    app.add_systems(SystemType::Startup, &[(example_system, "example_system", &[])]);
+    app.add_systems::<Startup>(&[(example_system, "example_system", &[])]).unwrap();
 
     fn example_system(_world: &World) {
         // E.g. change something in the World
     }
     ```
     */
-    pub fn add_systems(&mut self, systemtype: SystemType, systems: SystemSlice) {
-        match systemtype {
-            SystemType::Startup => {
-                for (run, name, deps) in systems {
-                    self.startup_systems.0.add(*run, name, deps);
-                }
-                self.startup_systems.1 = self.startup_systems.0.to_owned().build_dispatcher();
-            }
-            SystemType::Update => {
-                for (run, name, deps) in systems {
-                    self.update_systems.0.add(*run, name, deps);
-                }
-                self.update_systems.1 = self.update_systems.0.to_owned().build_dispatcher();
-            }
+    pub fn add_systems<S: AppSchedule + 'static>(
+        &mut self,
+        systems: SystemSlice,
+    ) -> Result<(), ScheduleError> {
+        let schedule = self
+            .systems
+            .get_mut(&TypeId::of::<S>())
+            .ok_or(ScheduleError::ScheduleNotRegistered)?;
+        for (run, name, deps) in systems {
+            schedule.0.add(*run, name, deps);
         }
+
+        schedule.1 = schedule.0.to_owned().build_dispatcher();
+        Ok(())
     }
 
-    pub fn register_event<E: Any + Send + Sync>(&mut self) {
-        self.world
-            .get_resource_mut::<Events>()
-            .unwrap()
-            .0
-            .insert(TypeId::of::<E>(), vec![]);
+    pub fn register_event<E: Any + Send + Sync + Clone>(&mut self) {
+        self.world.register_event::<E>();
         self.event_systems
             .insert(TypeId::of::<E>(), (Systems::new(), Dispatcher::default()));
     }
 
-    pub fn add_event_systems<E: Any + Send + Sync>(
+    pub fn add_event_systems<E: Any + Send + Sync + Clone>(
         &mut self,
         systems: SystemSlice,
     ) -> Result<(), EventError> {
@@ -149,26 +172,9 @@ impl App {
         self.runner = runner;
     }
 
-    /// update the [`App`] once
-    pub fn update(&self) {
-        self.update_systems.1.dispatch(&self.world);
-
-        // get which events occured
-        let events = self
-            .world
-            .get_resource::<Events>()
-            .unwrap()
-            .0
-            .par_iter()
-            .filter_map(|(type_id, events)| {
-                if !events.is_empty() {
-                    Some(*type_id)
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
-
+    /// Process pending events.
+    pub fn process_events(&self) {
+        let events = self.world.get_pending_events();
         // dispatch systems for events
         events.par_iter().for_each(|type_id| {
             self.event_systems
@@ -178,28 +184,21 @@ impl App {
                 .dispatch(&self.world);
         });
 
-        // clear events
-        self.world
-            .get_resource_mut::<Events>()
-            .unwrap()
-            .clear_events();
+        self.world.clear_events();
     }
 
     /// Run the Application
     pub fn run(self) {
-        self.startup_systems.1.dispatch(&self.world);
         (self.runner)(self);
     }
 }
 
-/// Used to specify if systems should be added to the `startup` or `update` loop of the [`App`]
-pub enum SystemType {
-    Startup,
-    Update,
-}
-
 fn default_runner(app: App) {
+    app.run_schedule::<Startup>().unwrap();
     loop {
-        app.update();
+        app.run_schedule::<PreUpdate>().unwrap();
+        app.run_schedule::<Update>().unwrap();
+        app.run_schedule::<PostUpdate>().unwrap();
+        app.process_events();
     }
 }
