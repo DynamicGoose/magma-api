@@ -17,7 +17,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-magma_input = "0.1.0-alpha.1"
+magma_input = "0.1.0-alpha.2"
 ```
 
 ### Example (with magma_api)

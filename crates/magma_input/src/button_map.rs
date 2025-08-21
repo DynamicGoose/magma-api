@@ -1,7 +1,7 @@
 use std::{collections::HashSet, hash::Hash};
 
 /// Button map resource for button presses
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct ButtonMap<T: Copy + Eq + Hash> {
     pressed: HashSet<T>,
     just_pressed: HashSet<T>,

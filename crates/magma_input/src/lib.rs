@@ -21,6 +21,7 @@ pub mod mouse;
 mod systems;
 
 /// The input module for the app
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub struct InputModule;
 
 impl Module for InputModule {

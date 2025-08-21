@@ -1,4 +1,4 @@
-use magma_app::{App, World, events::Events};
+use magma_app::{App, World, schedule::Update};
 use magma_input::{
     ButtonMap, InputModule,
     input_event::{KeyboardInput, MouseButtonInput},
@@ -10,13 +10,12 @@ use magma_input::{
 fn keyboard_mouse_systems() {
     let mut app = App::new();
     app.add_module(InputModule);
-    app.add_systems(
-        magma_app::SystemType::Update,
-        &[(send_events, "send_events", &[])],
-    );
+    app.add_systems::<Update>(&[(send_events, "send_events", &[])])
+        .unwrap();
     app.world.register_component::<DummyWindow>();
     app.world.create_entity((DummyWindow,)).unwrap();
-    app.update();
+    app.run_schedule::<Update>().unwrap();
+    app.process_events();
     assert!(
         app.world
             .get_resource::<ButtonMap<KeyCode>>()
@@ -31,11 +30,10 @@ fn keyboard_mouse_systems() {
 }
 
 fn send_events(world: &World) {
-    let mut events = world.get_resource_mut::<Events>().unwrap();
     let window = world.query::<(DummyWindow,)>().unwrap()[0];
 
-    events
-        .push_event(KeyboardInput {
+    world
+        .send_event(KeyboardInput {
             key: magma_input::keyboard::Key::Space,
             key_code: magma_input::keyboard::KeyCode::Space,
             state: magma_input::ButtonState::Pressed,
@@ -44,8 +42,8 @@ fn send_events(world: &World) {
         })
         .unwrap();
 
-    events
-        .push_event(KeyboardInput {
+    world
+        .send_event(KeyboardInput {
             key: magma_input::keyboard::Key::Space,
             key_code: magma_input::keyboard::KeyCode::Space,
             state: magma_input::ButtonState::Released,
@@ -54,16 +52,16 @@ fn send_events(world: &World) {
         })
         .unwrap();
 
-    events
-        .push_event(MouseButtonInput {
+    world
+        .send_event(MouseButtonInput {
             button: magma_input::mouse::MouseButton::Left,
             state: magma_input::ButtonState::Pressed,
             window: window.into(),
         })
         .unwrap();
 
-    events
-        .push_event(MouseButtonInput {
+    world
+        .send_event(MouseButtonInput {
             button: magma_input::mouse::MouseButton::Left,
             state: magma_input::ButtonState::Released,
             window: window.into(),

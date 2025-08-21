@@ -1,6 +1,6 @@
 [package]
 name = "magma_input"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 edition = "2024"
 description = "Part of the Magma-API, which is the API of the Magma3D game engine. This is responsable for handling user input."
 homepage = "https://dynamicgoose.github.io/magma3d-engine/"
@@ -8,5 +8,5 @@ license = "MIT"
 repository = "https://codeberg.com/DynamicGoose/magma-api"
 
 [dependencies]
-magma_app = { path = "../magma_app", version = "0.2.0-alpha.3" }
+magma_app = { path = "../magma_app", version = "0.2.0-alpha.4" }
 magma_math = { path = "../magma_math", version = "0.1.0-alpha" }
