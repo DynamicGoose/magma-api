@@ -1,4 +1,4 @@
-use magma_app::{App, events::Events};
+use magma_app::App;
 use magma_math::IVec2;
 use magma_windowing::{window_event::*, *};
 
@@ -31,9 +31,7 @@ fn resize_event() {
 
     // push event
     app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(WindowResized {
+        .send_event(WindowResized {
             window,
             width: 1280,
             height: 720,
@@ -47,11 +45,7 @@ fn redraw_event() {
     app.add_module(WindowingModule);
 
     // push event
-    app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(RedrawRequested)
-        .unwrap();
+    app.world.send_event(RedrawRequested).unwrap();
 }
 
 #[test]
@@ -62,11 +56,7 @@ fn window_created_event() {
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
     // push event
-    app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(WindowCreated { window })
-        .unwrap();
+    app.world.send_event(WindowCreated { window }).unwrap();
 }
 
 #[test]
@@ -78,9 +68,7 @@ fn close_requested_event() {
 
     // push event
     app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(WindowCloseRequested { window })
+        .send_event(WindowCloseRequested { window })
         .unwrap();
 }
 
@@ -92,11 +80,7 @@ fn closed_event() {
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
     // push event
-    app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(WindowClosed { window })
-        .unwrap();
+    app.world.send_event(WindowClosed { window }).unwrap();
 }
 
 #[test]
@@ -107,11 +91,7 @@ fn destroyed_event() {
     app.world.create_entity((Window::new(),)).unwrap();
 
     // push event
-    app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(WindowDestroyed)
-        .unwrap();
+    app.world.send_event(WindowDestroyed).unwrap();
 }
 
 #[test]
@@ -123,9 +103,7 @@ fn cursor_moved_event() {
 
     // push event
     app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(CursorMoved {
+        .send_event(CursorMoved {
             window,
             position: IVec2::new(16, 16),
         })
@@ -140,11 +118,7 @@ fn cursor_entered_event() {
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
     // push event
-    app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(CursorEntered { window })
-        .unwrap();
+    app.world.send_event(CursorEntered { window }).unwrap();
 }
 
 #[test]
@@ -155,11 +129,7 @@ fn cursor_left_event() {
     let window = app.world.create_entity((Window::new(),)).unwrap();
 
     // push event
-    app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(CursorLeft { window })
-        .unwrap();
+    app.world.send_event(CursorLeft { window }).unwrap();
 }
 
 #[test]
@@ -171,9 +141,7 @@ fn focused_event() {
 
     // push event
     app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(WindowFocused {
+        .send_event(WindowFocused {
             window,
             focus: true,
         })
@@ -189,9 +157,7 @@ fn occluded_event() {
 
     // push event
     app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(WindowOcclusion::Occluded { window })
+        .send_event(WindowOcclusion::Occluded { window })
         .unwrap();
 }
 
@@ -204,9 +170,7 @@ fn filednd_event() {
 
     // push event
     app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(FileDragDrop::HoverCanceled { window })
+        .send_event(FileDragDrop::HoverCanceled { window })
         .unwrap();
 }
 
@@ -219,9 +183,7 @@ fn moved_event() {
 
     // push event
     app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(WindowMoved {
+        .send_event(WindowMoved {
             window,
             position: IVec2::new(100, 200),
         })
@@ -237,9 +199,7 @@ fn theme_changed_event() {
 
     // push event
     app.world
-        .get_resource_mut::<Events>()
-        .unwrap()
-        .push_event(WindowThemeChanged {
+        .send_event(WindowThemeChanged {
             window,
             theme: window::WindowTheme::Dark,
         })

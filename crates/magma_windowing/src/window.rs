@@ -4,7 +4,7 @@ use magma_app::entities::Entity;
 use magma_math::{IVec2, UVec2};
 
 /// The Window Component
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Window {
     title: String,
     name: Option<String>,
@@ -377,11 +377,11 @@ impl Window {
 }
 
 /// Marks a window that has been requested to close
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub struct ClosingWindow;
 
 /// Position of a window
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
 pub enum WindowPosition {
     /// Automatically set an initial position for the [`Window`]. This will be converted into [`WindowPosition::Pos`] once the window has been created.
     #[default]
@@ -393,7 +393,7 @@ pub enum WindowPosition {
 }
 
 /// Window resolution in physical pixels.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct WindowResolution {
     width: u32,
     height: u32,
@@ -431,7 +431,7 @@ impl WindowResolution {
 }
 
 /// Resize limit of a window.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct WindowResizeLimit {
     min_width: u32,
     min_height: u32,
@@ -493,7 +493,7 @@ impl WindowResizeLimit {
 }
 
 /// The windowing mode of the window.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash, Default)]
 pub enum WindowMode {
     /// The window should be the size of it's resolution.
     #[default]
@@ -505,7 +505,7 @@ pub enum WindowMode {
 }
 
 /// The theme variant to use
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub enum WindowTheme {
     /// The window will use the system's global theme variant.
     #[default]
@@ -517,7 +517,7 @@ pub enum WindowTheme {
 }
 
 /// The monitor to use for a window.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub enum MonitorSelection {
     /// Use the currently focused monitor.
     #[default]
@@ -529,7 +529,7 @@ pub enum MonitorSelection {
 }
 
 /// Specifies the window's video mode.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
 pub enum VideoModeSelection {
     /// Use the current monitor's viodeo mode
     #[default]
@@ -543,7 +543,7 @@ pub enum VideoModeSelection {
 }
 
 /// The window's curosr mode.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub enum CursorMode {
     /// The cursor can freely move in and outside the window.
     #[default]
@@ -567,7 +567,7 @@ pub enum CursorMode {
 }
 
 /// The window's present mode
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub enum PresentMode {
     /// Chooses [`RelaxedFifo`](Self::RelaxedFifo) -> [`Fifo`](Self::Fifo) however available.
     Vsync,
@@ -625,7 +625,7 @@ pub enum PresentMode {
 }
 
 /// The window's alpha mode
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub enum AlphaMode {
     /// Automatically determine alpha mode.
     #[default]
@@ -643,7 +643,7 @@ pub enum AlphaMode {
 }
 
 /// Used for specifying which titlebar buttons should be enabled on a window.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct TitlebarButtons {
     minimize: bool,
     maximize: bool,

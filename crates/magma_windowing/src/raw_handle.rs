@@ -3,6 +3,7 @@ use std::{any::Any, marker::PhantomData, ops::Deref, sync::Arc};
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle, RawDisplayHandle, RawWindowHandle};
 
 /// A Wrapper for windows
+#[derive(Clone, Debug)]
 pub struct WindowWrapper<W> {
     reference: Arc<dyn Any + Send + Sync>,
     window_type: PhantomData<W>,
@@ -26,6 +27,7 @@ impl<W: 'static> Deref for WindowWrapper<W> {
 }
 
 /// A thread safe wrapper over [`RawWindowHandle`] and [`RawDisplayHandle`].
+#[derive(Clone, Debug)]
 pub struct RawHandleWrapper {
     _window: Arc<dyn Any + Send + Sync>,
     window_handle: RawWindowHandle,
