@@ -5,7 +5,7 @@ This crate integrates [`winit`] into the Magma API in order to manage applicatio
 
 ```
 # use std::error::Error;
-# use magma_app::{magma_ecs::entities::Entity, App, SystemType, World};
+# use magma_app::{magma_ecs::entities::Entity, App, schedule::Update, World};
 # use magma_windowing::Window;
 # use magma_winit::WinitModule;
 fn main() -> Result<(), Box<dyn Error>> {
@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     app.add_module(WinitModule);
     // Add the system to close created windows.
     // Windows should not be closed in a startup system, bc it might cause the app to hang.
-    app.add_systems(SystemType::Update, &[(close_windows, "close_windows", &[])]);
+    app.add_systems::<Update>(&[(close_windows, "close_windows", &[])]).unwrap();
     // create a window
     // The winit module will create a single window on startup. That means there will now be two.
     app.world.create_entity((Window::new().with_title("test"),))?;
@@ -33,7 +33,8 @@ fn close_windows(world: &World) {
 ```
 */
 
-use magma_app::{App, events::Events, module::Module};
+use magma_app::schedule::{PostUpdate, PreUpdate, Startup, Update};
+use magma_app::{App, module::Module};
 use magma_input::InputModule;
 use magma_input::input_event::{
     KeyboardInput, MouseButtonInput, MouseMotionInput, MouseScrollInput,
@@ -41,7 +42,7 @@ use magma_input::input_event::{
 use magma_math::{IVec2, UVec2, Vec2};
 use magma_windowing::monitor::VideoMode;
 use magma_windowing::window::WindowTheme;
-use magma_windowing::{ClosingWindow, Monitor, PrimaryMonitor, window_event::*};
+use magma_windowing::{Monitor, PrimaryMonitor, window_event::*};
 use magma_windowing::{Window, WindowingModule};
 use windows::Windows;
 use winit::event_loop::ActiveEventLoop;
@@ -65,6 +66,15 @@ impl Module for WinitModule {
         app.add_module(WindowingModule);
         app.add_module(InputModule);
 
+        app.world.add_resource(Windows::new()).unwrap();
+
+        app.add_systems::<PreUpdate>(&[(
+            systems::delete_pending_windows,
+            "window_management",
+            &[],
+        )])
+        .unwrap();
+
         // default event handling
         app.add_event_systems::<WindowCloseRequested>(&[(
             systems::mark_closed_windows,
@@ -83,15 +93,11 @@ impl Module for WinitModule {
 
 pub struct WrappedApp {
     pub app: App,
-    pub windows: Windows,
 }
 
 impl WrappedApp {
     pub fn new(app: App) -> Self {
-        Self {
-            app,
-            windows: Windows::new(),
-        }
+        Self { app }
     }
 }
 
@@ -141,10 +147,15 @@ impl ApplicationHandler for WrappedApp {
             WindowEvent::Resized(physical_size) => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(WindowResized {
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                .send_event(WindowResized {
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                     width: physical_size.width,
                     height: physical_size.height,
                 })
@@ -152,10 +163,15 @@ impl ApplicationHandler for WrappedApp {
             WindowEvent::Moved(physical_position) => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(WindowMoved {
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                .send_event(WindowMoved {
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                     position: IVec2 {
                         x: physical_position.x,
                         y: physical_position.y,
@@ -165,65 +181,89 @@ impl ApplicationHandler for WrappedApp {
             WindowEvent::CloseRequested => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(WindowCloseRequested {
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                .send_event(WindowCloseRequested {
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                 })
                 .unwrap(),
-            WindowEvent::Destroyed => self
-                .app
-                .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(WindowDestroyed)
-                .unwrap(),
+            WindowEvent::Destroyed => self.app.world.send_event(WindowDestroyed).unwrap(),
             WindowEvent::DroppedFile(path_buf) => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(FileDragDrop::Dropped {
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                .send_event(FileDragDrop::Dropped {
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                     path: path_buf,
                 })
                 .unwrap(),
             WindowEvent::HoveredFile(path_buf) => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(FileDragDrop::Hovered {
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                .send_event(FileDragDrop::Hovered {
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                     path: path_buf,
                 })
                 .unwrap(),
             WindowEvent::HoveredFileCancelled => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(FileDragDrop::HoverCanceled {
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                .send_event(FileDragDrop::HoverCanceled {
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                 })
                 .unwrap(),
             WindowEvent::Focused(focus) => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(WindowFocused {
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                .send_event(WindowFocused {
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                     focus,
                 })
                 .unwrap(),
             WindowEvent::CursorMoved { position, .. } => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(CursorMoved {
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                .send_event(CursorMoved {
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                     position: IVec2 {
                         x: position.x as i32,
                         y: position.y as i32,
@@ -233,28 +273,43 @@ impl ApplicationHandler for WrappedApp {
             WindowEvent::CursorEntered { .. } => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(CursorEntered {
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                .send_event(CursorEntered {
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                 })
                 .unwrap(),
             WindowEvent::CursorLeft { .. } => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(CursorLeft {
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                .send_event(CursorLeft {
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                 })
                 .unwrap(),
             WindowEvent::ThemeChanged(theme) => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(WindowThemeChanged {
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                .send_event(WindowThemeChanged {
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                     theme: match theme {
                         winit::window::Theme::Light => WindowTheme::Light,
                         winit::window::Theme::Dark => WindowTheme::Dark,
@@ -264,30 +319,34 @@ impl ApplicationHandler for WrappedApp {
             WindowEvent::Occluded(occlusion) => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(match occlusion {
+                .send_event(match occlusion {
                     true => WindowOcclusion::Occluded {
-                        window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                        window: *self
+                            .app
+                            .world
+                            .get_resource::<Windows>()
+                            .unwrap()
+                            .window_to_entity
+                            .get(&window_id)
+                            .unwrap(),
                     },
                     false => WindowOcclusion::NotOccluded {
-                        window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                        window: *self
+                            .app
+                            .world
+                            .get_resource::<Windows>()
+                            .unwrap()
+                            .window_to_entity
+                            .get(&window_id)
+                            .unwrap(),
                     },
                 })
                 .unwrap(),
-            WindowEvent::RedrawRequested => self
-                .app
-                .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(RedrawRequested)
-                .unwrap(),
+            WindowEvent::RedrawRequested => self.app.world.send_event(RedrawRequested).unwrap(),
             WindowEvent::KeyboardInput { event, .. } => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(KeyboardInput {
+                .send_event(KeyboardInput {
                     key: match event.logical_key {
                         winit::keyboard::Key::Named(named_key) => match named_key {
                             winit::keyboard::NamedKey::Alt => magma_input::keyboard::Key::Alt,
@@ -1465,15 +1524,20 @@ impl ApplicationHandler for WrappedApp {
                         winit::event::ElementState::Released => magma_input::ButtonState::Released,
                     },
                     repeat: event.repeat,
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                 })
                 .unwrap(),
             WindowEvent::MouseInput { state, button, .. } => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(MouseButtonInput {
+                .send_event(MouseButtonInput {
                     button: match button {
                         winit::event::MouseButton::Left => magma_input::mouse::MouseButton::Left,
                         winit::event::MouseButton::Right => magma_input::mouse::MouseButton::Right,
@@ -1492,15 +1556,20 @@ impl ApplicationHandler for WrappedApp {
                         winit::event::ElementState::Pressed => magma_input::ButtonState::Pressed,
                         winit::event::ElementState::Released => magma_input::ButtonState::Pressed,
                     },
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                 })
                 .unwrap(),
             WindowEvent::MouseWheel { delta, .. } => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(MouseScrollInput {
+                .send_event(MouseScrollInput {
                     unit: match delta {
                         winit::event::MouseScrollDelta::LineDelta(_, _) => {
                             magma_input::mouse::MouseScrollUnit::Line
@@ -1517,7 +1586,14 @@ impl ApplicationHandler for WrappedApp {
                         winit::event::MouseScrollDelta::LineDelta(_, y) => y,
                         winit::event::MouseScrollDelta::PixelDelta(delta) => delta.y as f32,
                     },
-                    window: *self.windows.window_to_entity.get(&window_id).unwrap(),
+                    window: *self
+                        .app
+                        .world
+                        .get_resource::<Windows>()
+                        .unwrap()
+                        .window_to_entity
+                        .get(&window_id)
+                        .unwrap(),
                 })
                 .unwrap(),
             _ => (),
@@ -1534,9 +1610,7 @@ impl ApplicationHandler for WrappedApp {
             winit::event::DeviceEvent::MouseMotion { delta } => self
                 .app
                 .world
-                .get_resource_mut::<Events>()
-                .unwrap()
-                .push_event(MouseMotionInput {
+                .send_event(MouseMotionInput {
                     delta: Vec2::new(delta.0 as f32, delta.1 as f32),
                 })
                 .unwrap(),
@@ -1548,7 +1622,10 @@ impl ApplicationHandler for WrappedApp {
         // update winit backend
         self.winit_update(event_loop);
         // update the app
-        self.app.update();
+        self.app.run_schedule::<PreUpdate>().unwrap();
+        self.app.run_schedule::<Update>().unwrap();
+        self.app.run_schedule::<PostUpdate>().unwrap();
+        self.app.process_events();
     }
 }
 
@@ -1563,25 +1640,31 @@ impl WrappedApp {
             .for_each(|window_entity| {
                 let mut window_component = window_entity.get_component_mut::<Window>().unwrap();
                 if !window_component.has_window {
-                    self.windows.create_winit_window(
-                        &self.app.world,
-                        event_loop,
-                        &mut window_component,
-                        window_entity.into(),
-                    );
+                    self.app
+                        .world
+                        .get_resource_mut::<Windows>()
+                        .unwrap()
+                        .create_winit_window(
+                            &self.app.world,
+                            event_loop,
+                            &mut window_component,
+                            window_entity.into(),
+                        );
                 } else if window_component.changed_attr {
-                    self.windows.update_winit_window(
-                        &mut window_component,
-                        window_entity.into(),
-                        &self.app.world,
-                    );
+                    self.app
+                        .world
+                        .get_resource_mut::<Windows>()
+                        .unwrap()
+                        .update_winit_window(
+                            &mut window_component,
+                            window_entity.into(),
+                            &self.app.world,
+                        );
                 }
                 window_component.changed_attr = false;
                 self.app
                     .world
-                    .get_resource_mut::<Events>()
-                    .unwrap()
-                    .push_event(WindowCreated {
+                    .send_event(WindowCreated {
                         window: window_entity.into(),
                     })
                     .unwrap();
@@ -1592,10 +1675,21 @@ impl WrappedApp {
         // exit if no windows are present
         if windows.is_empty() {
             event_loop.exit();
-        } else if windows.len() < self.windows.winit_windows.len() {
+        } else if windows.len()
+            < self
+                .app
+                .world
+                .get_resource::<Windows>()
+                .unwrap()
+                .winit_windows
+                .len()
+        {
             // drop winit windows without an entity
             let windows_to_drop = self
-                .windows
+                .app
+                .world
+                .get_resource::<Windows>()
+                .unwrap()
                 .window_to_entity
                 .iter()
                 .filter_map(|(_, entity)| {
@@ -1611,29 +1705,13 @@ impl WrappedApp {
                 })
                 .collect::<Vec<_>>();
             for window in windows_to_drop {
-                self.windows.delete_window(window);
-            }
-        }
-
-        // Delete window entities which have a pending close request.
-        // Their winit windows will be destroyd before the next update.
-        // TODO: this could be refactored as a system, when scheduling systems at "start" or "end" is supported
-        self.app
-            .world
-            .query::<(ClosingWindow, Window)>()
-            .unwrap()
-            .iter()
-            .for_each(|closing_window| {
-                closing_window.delete();
                 self.app
                     .world
-                    .get_resource_mut::<Events>()
+                    .get_resource_mut::<Windows>()
                     .unwrap()
-                    .push_event(WindowClosed {
-                        window: closing_window.into(),
-                    })
-                    .unwrap();
-            });
+                    .delete_window(window);
+            }
+        }
     }
 }
 
@@ -1644,5 +1722,6 @@ fn winit_event_loop(app: App) {
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
     let mut app = WrappedApp::new(app);
+    app.app.run_schedule::<Startup>().unwrap();
     event_loop.run_app(&mut app).unwrap();
 }

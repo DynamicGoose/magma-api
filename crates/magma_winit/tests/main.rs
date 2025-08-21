@@ -1,18 +1,16 @@
-use magma_app::{App, SystemType, World};
+use magma_app::{App, World, schedule::Update};
 use magma_windowing::{Monitor, Window};
 use magma_winit::WinitModule;
 
 fn main() {
     let mut app = App::new();
     app.add_module(WinitModule);
-    app.add_systems(
-        SystemType::Update,
-        &[
-            (close_windows, "close_windows", &["open_windows"]),
-            (open_windows, "open_windows", &[]),
-            (print_monitors, "print_monitors", &["close_windows"]),
-        ],
-    );
+    app.add_systems::<Update>(&[
+        (close_windows, "close_windows", &["open_windows"]),
+        (open_windows, "open_windows", &[]),
+        (print_monitors, "print_monitors", &["close_windows"]),
+    ])
+    .unwrap();
     app.run();
 }
 

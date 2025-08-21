@@ -15,7 +15,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-magma_winit = "0.1.0-alpha.8"
+magma_winit = "0.1.0-alpha.9"
 ```
 
 ### Example (with magma_api)

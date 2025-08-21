@@ -1,22 +1,17 @@
 use magma_app::{
     World,
-    events::Events,
     rayon::iter::{IntoParallelRefIterator, ParallelIterator},
 };
 use magma_windowing::{
     ClosingWindow, Window,
     window::WindowResolution,
-    window_event::{WindowCloseRequested, WindowFocused, WindowMoved, WindowResized},
+    window_event::{WindowCloseRequested, WindowClosed, WindowFocused, WindowMoved, WindowResized},
 };
 
 pub fn mark_closed_windows(world: &World) {
-    let events = world.get_resource::<Events>().unwrap();
-    let close_requests = events.get_events::<WindowCloseRequested>().unwrap();
+    let close_requests = world.poll_events::<WindowCloseRequested>().unwrap();
 
     for close_request in close_requests {
-        let close_request = close_request
-            .downcast_ref::<WindowCloseRequested>()
-            .unwrap();
         world
             .query::<(Window,)>()
             .unwrap()
@@ -35,11 +30,9 @@ pub fn mark_closed_windows(world: &World) {
 }
 
 pub fn resized(world: &World) {
-    let events = world.get_resource::<Events>().unwrap();
-    let resize_events = events.get_events::<WindowResized>().unwrap();
+    let resize_events = world.poll_events::<WindowResized>().unwrap();
 
     for resize_event in resize_events {
-        let resize_event = resize_event.downcast_ref::<WindowResized>().unwrap();
         let mut window = world
             .get_component_mut::<Window>(resize_event.window)
             .unwrap();
@@ -55,11 +48,9 @@ pub fn resized(world: &World) {
 }
 
 pub fn moved(world: &World) {
-    let events = world.get_resource::<Events>().unwrap();
-    let move_events = events.get_events::<WindowMoved>().unwrap();
+    let move_events = world.poll_events::<WindowMoved>().unwrap();
 
     for move_event in move_events {
-        let move_event = move_event.downcast_ref::<WindowMoved>().unwrap();
         let mut window = world
             .get_component_mut::<Window>(move_event.window)
             .unwrap();
@@ -74,11 +65,9 @@ pub fn moved(world: &World) {
 }
 
 pub fn focused(world: &World) {
-    let events = world.get_resource::<Events>().unwrap();
-    let focus_events = events.get_events::<WindowFocused>().unwrap();
+    let focus_events = world.poll_events::<WindowFocused>().unwrap();
 
     for focus_event in focus_events {
-        let focus_event = focus_event.downcast_ref::<WindowFocused>().unwrap();
         let mut window = world
             .get_component_mut::<Window>(focus_event.window)
             .unwrap();
@@ -88,4 +77,19 @@ pub fn focused(world: &World) {
             window.changed_attr = false;
         }
     }
+}
+
+pub fn delete_pending_windows(world: &World) {
+    world
+        .query::<(ClosingWindow, Window)>()
+        .unwrap()
+        .iter()
+        .for_each(|closing_window| {
+            closing_window.delete();
+            world
+                .send_event(WindowClosed {
+                    window: closing_window.into(),
+                })
+                .unwrap();
+        });
 }
