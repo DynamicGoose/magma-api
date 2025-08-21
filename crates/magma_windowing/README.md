@@ -16,7 +16,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-magma_windowing = "0.1.0-alpha.1"
+magma_windowing = "0.1.0-alpha.3"
 ```
 
 ### Example (with magma_api)
