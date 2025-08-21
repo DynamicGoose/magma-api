@@ -16,7 +16,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-magma_app = "0.2.0-alpha.3"
+magma_app = "0.2.0-alpha.4"
 ```
 
 ### Entity-Component-System (Magma-ECS)
