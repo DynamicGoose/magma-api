@@ -1,8 +1,6 @@
-use magma_app::{
-    World,
-    rayon::iter::{IntoParallelRefIterator, ParallelIterator},
-};
-use magma_windowing::{
+use magma_app::World;
+
+use crate::{
     ClosingWindow, Window,
     window::WindowResolution,
     window_event::{WindowCloseRequested, WindowFocused, WindowMoved, WindowResized},
@@ -12,20 +10,15 @@ pub fn mark_closed_windows(world: &World) {
     let close_requests = world.poll_events::<WindowCloseRequested>().unwrap();
 
     for close_request in close_requests {
-        world
-            .query::<(Window,)>()
+        if world
+            .get_component::<Window>(close_request.window)
             .unwrap()
-            .par_iter()
-            .for_each(|window| {
-                if window.id() == close_request.window.id()
-                    && window
-                        .get_component::<Window>()
-                        .unwrap()
-                        .default_event_handling
-                {
-                    window.assign_components((ClosingWindow,)).unwrap();
-                }
-            });
+            .default_event_handling
+        {
+            world
+                .assign_components((ClosingWindow,), close_request.window)
+                .unwrap();
+        }
     }
 }
 
@@ -52,7 +45,7 @@ pub fn moved(world: &World) {
             .unwrap();
 
         if window.default_event_handling {
-            window.position = magma_windowing::window::WindowPosition::Pos(move_event.position);
+            window.position = crate::window::WindowPosition::Pos(move_event.position);
         }
     }
 }

@@ -1,7 +1,9 @@
-use magma_app::{App, module::Module};
+use magma_app::{App, module::Module, schedule::PostUpdate};
 pub use monitor::{Monitor, PrimaryMonitor};
 pub use window::{ClosingWindow, Window};
 use window_event::*;
+
+use crate::systems::{delete_pending_windows, focused, mark_closed_windows, moved, resized};
 
 /// ECS Monitor representation
 pub mod monitor;
@@ -11,6 +13,8 @@ pub mod raw_handle;
 pub mod window;
 /// Window related events
 pub mod window_event;
+
+mod systems;
 
 /// The Window module for the App
 pub struct WindowingModule;
@@ -36,5 +40,36 @@ impl Module for WindowingModule {
         app.register_event::<FileDragDrop>();
         app.register_event::<WindowMoved>();
         app.register_event::<WindowThemeChanged>();
+
+        app.add_systems::<PostUpdate>(vec![(
+            delete_pending_windows,
+            "delete_pending_windows".to_string(),
+            vec![],
+        )])
+        .unwrap();
+
+        app.add_event_systems::<WindowCloseRequested>(vec![(
+            mark_closed_windows,
+            "mark_closing_windows".to_string(),
+            vec![],
+        )])
+        .unwrap();
+
+        app.add_event_systems::<WindowResized>(vec![(
+            resized,
+            "resized_windows".to_string(),
+            vec![],
+        )])
+        .unwrap();
+
+        app.add_event_systems::<WindowMoved>(vec![(moved, "moved_windows".to_string(), vec![])])
+            .unwrap();
+
+        app.add_event_systems::<WindowFocused>(vec![(
+            focused,
+            "focused_windows".to_string(),
+            vec![],
+        )])
+        .unwrap();
     }
 }

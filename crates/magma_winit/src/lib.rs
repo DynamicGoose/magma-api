@@ -54,7 +54,6 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
 };
 
-mod systems;
 pub mod windows;
 
 /**
@@ -69,39 +68,6 @@ impl Module for WinitModule {
         app.add_module(InputModule);
 
         app.world.add_resource(Windows::new()).unwrap();
-
-        app.add_systems::<PreUpdate>(vec![(
-            systems::delete_pending_windows,
-            "window_management".to_string(),
-            vec![],
-        )])
-        .unwrap();
-
-        // default event handling
-        app.add_event_systems::<WindowCloseRequested>(vec![(
-            systems::mark_closed_windows,
-            "winit_mark_closed".to_string(),
-            vec![],
-        )])
-        .unwrap();
-        app.add_event_systems::<WindowResized>(vec![(
-            systems::resized,
-            "winit_resized".to_string(),
-            vec![],
-        )])
-        .unwrap();
-        app.add_event_systems::<WindowMoved>(vec![(
-            systems::moved,
-            "winit_moved".to_string(),
-            vec![],
-        )])
-        .unwrap();
-        app.add_event_systems::<WindowFocused>(vec![(
-            systems::focused,
-            "winit_focused".to_string(),
-            vec![],
-        )])
-        .unwrap();
     }
 }
 
