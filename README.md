@@ -8,9 +8,9 @@ You will be able to use this in combination with the upcoming graphical editor f
 
 - **magma_app:** Core functionality
     - [x] Expands [magma-ecs](https://codeberg.org/DynamicGoose/magma-ecs)
+    - [x] Create custom `AppSchedules`
     - [x] Creating apps with a built-in update loop
     - [x] Add custom modules to apps to expand functionality
-    - [x] A powerfull event system which let's you define custom events
 - **magma_window:** Backend-agnostic windowing system
     - [x] The `WindowModule` adds respective events and components to the app
     - [x] Handle window events
@@ -24,6 +24,7 @@ You will be able to use this in combination with the upcoming graphical editor f
     - [x] backend for magma_input
 - **magma_render:** Rendering system
     - [x] [FeuFeu](https://codeberg.org/DynamicGoose/feufeu) rendering library based on [wgpu](https://wgpu.rs/)
+    - [x] Pipelined rendeing
     - [ ] Vertex/Voxel hybrid renderer
 - **magma_asset:** Asset loading
     - [ ] load glTF models

@@ -30,16 +30,16 @@ impl Module for InputModule {
         app.register_event::<MouseButtonInput>();
         app.register_event::<MouseScrollInput>();
         app.register_event::<MouseMotionInput>();
-        app.add_event_systems::<KeyboardInput>(&[(
+        app.add_event_systems::<KeyboardInput>(vec![(
             update_keyboard_resource,
-            "keyboard_resource",
-            &[],
+            "keyboard_resource".to_string(),
+            vec![],
         )])
         .unwrap();
-        app.add_event_systems::<MouseButtonInput>(&[(
+        app.add_event_systems::<MouseButtonInput>(vec![(
             update_mouse_resource,
-            "mouse_resource",
-            &[],
+            "mouse_resource".to_string(),
+            vec![],
         )])
         .unwrap();
 

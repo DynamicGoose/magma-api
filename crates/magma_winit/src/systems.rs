@@ -5,7 +5,7 @@ use magma_app::{
 use magma_windowing::{
     ClosingWindow, Window,
     window::WindowResolution,
-    window_event::{WindowCloseRequested, WindowClosed, WindowFocused, WindowMoved, WindowResized},
+    window_event::{WindowCloseRequested, WindowFocused, WindowMoved, WindowResized},
 };
 
 pub fn mark_closed_windows(world: &World) {
@@ -21,7 +21,7 @@ pub fn mark_closed_windows(world: &World) {
                     && window
                         .get_component::<Window>()
                         .unwrap()
-                        .default_event_handling()
+                        .default_event_handling
                 {
                     window.assign_components((ClosingWindow,)).unwrap();
                 }
@@ -37,12 +37,8 @@ pub fn resized(world: &World) {
             .get_component_mut::<Window>(resize_event.window)
             .unwrap();
 
-        if window.default_event_handling() {
-            window.set_resolution(WindowResolution::new(
-                resize_event.width,
-                resize_event.height,
-            ));
-            window.changed_attr = false;
+        if window.default_event_handling {
+            window.resolution = WindowResolution::new(resize_event.width, resize_event.height);
         }
     }
 }
@@ -55,11 +51,8 @@ pub fn moved(world: &World) {
             .get_component_mut::<Window>(move_event.window)
             .unwrap();
 
-        if window.default_event_handling() {
-            window.set_position(magma_windowing::window::WindowPosition::Pos(
-                move_event.position,
-            ));
-            window.changed_attr = false;
+        if window.default_event_handling {
+            window.position = magma_windowing::window::WindowPosition::Pos(move_event.position);
         }
     }
 }
@@ -72,9 +65,8 @@ pub fn focused(world: &World) {
             .get_component_mut::<Window>(focus_event.window)
             .unwrap();
 
-        if window.default_event_handling() {
-            window.set_focused(focus_event.focus);
-            window.changed_attr = false;
+        if window.default_event_handling {
+            window.focused = focus_event.focus;
         }
     }
 }
@@ -86,10 +78,5 @@ pub fn delete_pending_windows(world: &World) {
         .iter()
         .for_each(|closing_window| {
             closing_window.delete();
-            world
-                .send_event(WindowClosed {
-                    window: closing_window.into(),
-                })
-                .unwrap();
         });
 }

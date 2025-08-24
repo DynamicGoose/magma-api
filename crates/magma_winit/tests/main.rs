@@ -5,10 +5,18 @@ use magma_winit::WinitModule;
 fn main() {
     let mut app = App::new();
     app.add_module(WinitModule);
-    app.add_systems::<Update>(&[
-        (close_windows, "close_windows", &["open_windows"]),
-        (open_windows, "open_windows", &[]),
-        (print_monitors, "print_monitors", &["close_windows"]),
+    app.add_systems::<Update>(vec![
+        (
+            close_windows,
+            "close_windows".to_string(),
+            vec!["open_windows".to_string()],
+        ),
+        (open_windows, "open_windows".to_string(), vec![]),
+        (
+            print_monitors,
+            "print_monitors".to_string(),
+            vec!["close_windows".to_string()],
+        ),
     ])
     .unwrap();
     app.run();

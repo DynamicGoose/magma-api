@@ -13,7 +13,7 @@ pub struct TestModule;
 impl Module for TestModule {
     fn setup(self, app: &mut magma_app::App) {
         app.world.add_resource(10_u32).unwrap();
-        app.add_systems::<Startup>(&[(test_system, "test_system", &[])])
+        app.add_systems::<Startup>(vec![(test_system, "test_system".to_string(), vec![])])
             .unwrap();
     }
 }

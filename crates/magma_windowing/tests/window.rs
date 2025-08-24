@@ -8,17 +8,11 @@ fn create_window() {
     app.add_module(WindowingModule);
 
     let window = app.world.create_entity((Window::new(),)).unwrap();
-    app.world
-        .get_component_mut::<Window>(window)
-        .unwrap()
-        .set_title("Hello World!");
+    app.world.get_component_mut::<Window>(window).unwrap().title = "Hello World!".to_string();
 
     assert_eq!(
-        app.world
-            .get_component::<Window>(window)
-            .unwrap()
-            .changed_attr,
-        true
+        app.world.get_component::<Window>(window).unwrap().title,
+        "Hello World!".to_string(),
     );
 }
 

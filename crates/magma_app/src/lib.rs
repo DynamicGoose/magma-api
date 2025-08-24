@@ -29,7 +29,7 @@ pub mod module;
 /// The [`AppSchedule`] trait and default schedules.
 pub mod schedule;
 
-type SystemSlice = &'static [(fn(&World), &'static str, &'static [&'static str])];
+type SystemVec = Vec<(fn(&World), String, Vec<String>)>;
 
 /// The [`App`] struct holds all the apps data and defines the necessary functions and methods to operate on it.
 pub struct App {
@@ -123,7 +123,7 @@ impl App {
     use magma_app::schedule::Startup;
 
     let mut app = App::new();
-    app.add_systems::<Startup>(&[(example_system, "example_system", &[])]).unwrap();
+    app.add_systems::<Startup>(vec![(example_system, "example_system".to_string(), vec![])]).unwrap();
 
     fn example_system(_world: &World) {
         // E.g. change something in the World
@@ -132,14 +132,14 @@ impl App {
     */
     pub fn add_systems<S: AppSchedule + 'static>(
         &mut self,
-        systems: SystemSlice,
+        systems: SystemVec,
     ) -> Result<(), ScheduleError> {
         let schedule = self
             .systems
             .get_mut(&TypeId::of::<S>())
             .ok_or(ScheduleError::ScheduleNotRegistered)?;
         for (run, name, deps) in systems {
-            schedule.0.add(*run, name, deps);
+            schedule.0.add(run, name, deps);
         }
 
         schedule.1 = schedule.0.to_owned().build_dispatcher();
@@ -154,14 +154,14 @@ impl App {
 
     pub fn add_event_systems<E: Any + Send + Sync + Clone>(
         &mut self,
-        systems: SystemSlice,
+        systems: SystemVec,
     ) -> Result<(), EventError> {
         let event_systems = self
             .event_systems
             .get_mut(&TypeId::of::<E>())
             .ok_or(EventError::EventNotRegistered)?;
         for (run, name, deps) in systems {
-            event_systems.0.add(*run, name, deps);
+            event_systems.0.add(run, name, deps);
         }
         event_systems.1 = event_systems.0.to_owned().build_dispatcher();
         Ok(())

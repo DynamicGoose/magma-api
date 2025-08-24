@@ -16,10 +16,14 @@ fn add_systems() {
 
     app.world.add_resource(10_u32).unwrap();
 
-    app.add_systems::<Startup>(&[(system_startup, "system_startup", &[])])
+    app.add_systems::<Startup>(vec![(system_startup, "system_startup".to_string(), vec![])])
         .unwrap();
-    app.add_systems::<Update>(&[(update_resource, "update_resource", &[])])
-        .unwrap();
+    app.add_systems::<Update>(vec![(
+        update_resource,
+        "update_resource".to_string(),
+        vec![],
+    )])
+    .unwrap();
     app.set_runner(test_runner);
     app.run();
 }
@@ -28,11 +32,15 @@ fn add_systems() {
 fn event_systems() {
     let mut app = App::new();
     app.register_event::<Event>();
-    app.add_event_systems::<Event>(&[(update_resource, "update_resource", &[])])
-        .unwrap();
+    app.add_event_systems::<Event>(vec![(
+        update_resource,
+        "update_resource".to_string(),
+        vec![],
+    )])
+    .unwrap();
     app.world.add_resource(10_u32).unwrap();
 
-    app.add_systems::<Update>(&[(event_system, "event_system", &[])])
+    app.add_systems::<Update>(vec![(event_system, "event_system".to_string(), vec![])])
         .unwrap();
 
     app.set_runner(test_runner);

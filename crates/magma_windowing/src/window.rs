@@ -6,29 +6,24 @@ use magma_math::{IVec2, UVec2};
 /// The Window Component
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Window {
-    title: String,
-    name: Option<String>,
-    position: WindowPosition,
-    resolution: WindowResolution,
-    resizable: bool,
-    resize_limit: WindowResizeLimit,
-    mode: WindowMode,
-    cursor_mode: CursorMode,
-    cursor_visible: bool,
-    decorations: bool,
-    titlebar_buttons: TitlebarButtons,
-    present_mode: PresentMode, // wgpu
-    alpha_mode: AlphaMode,     // wgpu
-    transparent: bool,
-    focused: bool,
-    default_event_handling: bool, // internal
-    window_theme: WindowTheme,
-    desired_maximum_frame_latency: Option<NonZero<u32>>, // wgpu::SurfaceConfiguration::desired_maximum_frame_latency
-
-    /// True if the backend has created a window for this component.
-    pub has_window: bool,
-    /// True if this component was modified in the current update. This does not include changes that the backend makesto sync windows.
-    pub changed_attr: bool,
+    pub title: String,
+    pub name: Option<String>,
+    pub position: WindowPosition,
+    pub resolution: WindowResolution,
+    pub resizable: bool,
+    pub resize_limit: WindowResizeLimit,
+    pub mode: WindowMode,
+    pub cursor_mode: CursorMode,
+    pub cursor_visible: bool,
+    pub decorations: bool,
+    pub titlebar_buttons: TitlebarButtons,
+    pub present_mode: PresentMode, // wgpu
+    pub alpha_mode: AlphaMode,     // wgpu
+    pub transparent: bool,
+    pub focused: bool,
+    pub default_event_handling: bool, // internal
+    pub window_theme: WindowTheme,
+    pub desired_maximum_frame_latency: Option<NonZero<u32>>, // wgpu::SurfaceConfiguration::desired_maximum_frame_latency
 }
 
 impl Default for Window {
@@ -52,8 +47,6 @@ impl Default for Window {
             default_event_handling: true,
             window_theme: Default::default(),
             desired_maximum_frame_latency: NonZero::new(2_u32),
-            has_window: false,
-            changed_attr: false,
         }
     }
 }
@@ -61,318 +54,6 @@ impl Default for Window {
 impl Window {
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Create the window with a custom title.
-    pub fn with_title(mut self, title: &str) -> Self {
-        self.title = title.to_owned();
-        self
-    }
-
-    /// Get the window's display title.
-    pub fn title(&self) -> String {
-        self.title.to_owned()
-    }
-
-    /// Set the window's display title.
-    pub fn set_title(&mut self, title: &str) {
-        self.title = title.to_owned();
-        self.changed_attr = true;
-    }
-
-    /// Create the window with a custom (optional) name.
-    pub fn with_name(mut self, name: &str) -> Self {
-        self.name = Some(name.to_owned());
-        self
-    }
-
-    /// Get the window's name.
-    pub fn name(&self) -> Option<String> {
-        self.name.to_owned()
-    }
-
-    /// Set the window's optional name. This can only be set after first creating the window.
-    pub fn set_name(&mut self, name: &str) {
-        self.name = Some(name.to_owned());
-        self.changed_attr = true;
-    }
-
-    /// Create the window with specified [`WindowPosition`].
-    pub fn with_position(mut self, position: WindowPosition) -> Self {
-        self.position = position;
-        self
-    }
-
-    /// Get the current [`WindowPosition`].
-    pub fn position(&self) -> WindowPosition {
-        self.position
-    }
-
-    /// Set the [`WindowPosition`].
-    pub fn set_position(&mut self, position: WindowPosition) {
-        self.position = position;
-        self.changed_attr = true;
-    }
-
-    /// Create the window with specified [`WindowResolution`].
-    pub fn with_resolution(mut self, resolution: WindowResolution) -> Self {
-        self.resolution = resolution;
-        self
-    }
-
-    /// Get the current [`WindowResolution`].
-    pub fn resolution(&self) -> WindowResolution {
-        self.resolution
-    }
-
-    /// Set the [`WindowResolution`].
-    pub fn set_resolution(&mut self, resolution: WindowResolution) {
-        self.resolution = resolution;
-        self.changed_attr = true;
-    }
-
-    /// Set if the window should be resizable on creation.
-    pub fn with_resizable(mut self, resizable: bool) -> Self {
-        self.resizable = resizable;
-        self
-    }
-
-    /// Is the window resizable?
-    pub fn resizable(&self) -> bool {
-        self.resizable
-    }
-
-    /// Set if the window should be resizable.
-    pub fn set_resizable(&mut self, resizable: bool) {
-        self.resizable = resizable;
-        self.changed_attr = true;
-    }
-
-    /// Create the window with specified [`WindowResizeLimit`].
-    pub fn with_resize_limit(mut self, resize_limit: WindowResizeLimit) -> Self {
-        self.resize_limit = resize_limit;
-        self
-    }
-
-    /// Get the current [`WindowResizeLimit`].
-    pub fn resize_limit(&self) -> WindowResizeLimit {
-        self.resize_limit
-    }
-
-    /// Set the [`WindowResizeLimit`].
-    pub fn set_resize_limit(&mut self, resize_limit: WindowResizeLimit) {
-        self.resize_limit = resize_limit;
-        self.changed_attr = true;
-    }
-
-    /// Create the window with specified [`WindowMode`].
-    pub fn with_mode(mut self, mode: WindowMode) -> Self {
-        self.mode = mode;
-        self
-    }
-
-    /// Get the current [`WindowMode`]
-    pub fn mode(&self) -> WindowMode {
-        self.mode
-    }
-
-    /// Set the [`WindowMode`].
-    pub fn set_mode(&mut self, mode: WindowMode) {
-        self.mode = mode;
-        self.changed_attr = true;
-    }
-
-    /// Create the window with specified [`CursorMode`].
-    pub fn with_cursor_mode(mut self, cursor_mode: CursorMode) -> Self {
-        self.cursor_mode = cursor_mode;
-        self
-    }
-
-    /// Get the current [`CursorMode`].
-    pub fn cursor_mode(&self) -> CursorMode {
-        self.cursor_mode
-    }
-
-    /// Set the [`CursorMode`].
-    pub fn set_cursor_mode(&mut self, cursor_mode: CursorMode) {
-        self.cursor_mode = cursor_mode;
-        self.changed_attr = true;
-    }
-
-    /// Set if the cursor should be visible at window creation.
-    pub fn with_cursor_visible(mut self, cursor_visible: bool) -> Self {
-        self.cursor_visible = cursor_visible;
-        self
-    }
-
-    /// Is the cursor visible?
-    pub fn cursor_visible(&self) -> bool {
-        self.cursor_visible
-    }
-
-    /// Set if the cursor should be visible.
-    pub fn set_cursor_visible(&mut self, cursor_visible: bool) {
-        self.cursor_visible = cursor_visible;
-        self.changed_attr = true;
-    }
-
-    /// Set if window decorations should be enabled at window creation.
-    pub fn with_decorations(mut self, decorations: bool) -> Self {
-        self.decorations = decorations;
-        self
-    }
-
-    /// Are window decorations enabled?
-    pub fn decorations(&self) -> bool {
-        self.decorations
-    }
-
-    /// Set if window decorations should be enabled.
-    pub fn set_decorations(&mut self, decorations: bool) {
-        self.decorations = decorations;
-        self.changed_attr = true;
-    }
-
-    /// Set which [`TitlebarButtons`] should be enabled at window creation.
-    pub fn with_titlebar_buttons(mut self, titlebar_buttons: TitlebarButtons) -> Self {
-        self.titlebar_buttons = titlebar_buttons;
-        self
-    }
-
-    /// Get enabled [`TitlebarButtons`].
-    pub fn titlebar_buttons(&self) -> TitlebarButtons {
-        self.titlebar_buttons
-    }
-
-    /// Set which [`TitlebarButtons`] should be enabled.
-    pub fn set_titlebar_buttons(&mut self, titlebar_buttons: TitlebarButtons) {
-        self.titlebar_buttons = titlebar_buttons;
-        self.changed_attr = true;
-    }
-
-    /// Create the window with specified [`PresentMode`].
-    pub fn with_present_mode(mut self, present_mode: PresentMode) -> Self {
-        self.present_mode = present_mode;
-        self
-    }
-
-    /// Get the current [`PresentMode`].
-    pub fn present_mode(&self) -> PresentMode {
-        self.present_mode
-    }
-
-    /// Set the [`PresentMode`].
-    pub fn set_present_mode(&mut self, present_mode: PresentMode) {
-        self.present_mode = present_mode;
-        self.changed_attr = true;
-    }
-
-    /// Create the Window with specified [`AlphaMode`].
-    pub fn with_alpha_mode(mut self, alpha_mode: AlphaMode) -> Self {
-        self.alpha_mode = alpha_mode;
-        self
-    }
-
-    /// Get the current [`AlphaMode`].
-    pub fn alpha_mode(&self) -> AlphaMode {
-        self.alpha_mode
-    }
-
-    /// Set the [`AlphaMode`].
-    pub fn set_alpha_mode(&mut self, alpha_mode: AlphaMode) {
-        self.alpha_mode = alpha_mode;
-        self.changed_attr = true;
-    }
-
-    /// Set if the window should be transparent at window creation.
-    pub fn with_transparent(mut self, transparent: bool) -> Self {
-        self.transparent = transparent;
-        self
-    }
-
-    /// Is the window transparent?
-    pub fn transparent(&self) -> bool {
-        self.transparent
-    }
-
-    /// Set if the window should be transparent.
-    pub fn set_transparent(&mut self, transparent: bool) {
-        self.transparent = transparent;
-        self.changed_attr = true;
-    }
-
-    /// Create the window with specified focus.
-    pub fn with_focused(mut self, focused: bool) -> Self {
-        self.focused = focused;
-        self
-    }
-
-    /// Is the window focused?
-    pub fn focused(&self) -> bool {
-        self.focused
-    }
-
-    /// Set if the window should be focused.
-    pub fn set_focused(&mut self, focused: bool) {
-        self.focused = focused;
-        self.changed_attr = true;
-    }
-
-    /// Set if default event handling should be enabled at window creation.
-    pub fn with_default_event_handling(mut self, default_event_handling: bool) -> Self {
-        self.default_event_handling = default_event_handling;
-        self
-    }
-
-    /// Is default event handling enabled for this window?
-    pub fn default_event_handling(&self) -> bool {
-        self.default_event_handling
-    }
-
-    /// Set if default event handling should be enabled.
-    pub fn set_default_event_handling(&mut self, default_event_handling: bool) {
-        self.default_event_handling = default_event_handling;
-        self.changed_attr = true;
-    }
-
-    /// Create the window with specified [`WindowTheme`].
-    pub fn with_window_theme(mut self, window_theme: WindowTheme) -> Self {
-        self.window_theme = window_theme;
-        self
-    }
-
-    /// Get the current [`WindowTheme`].
-    pub fn window_theme(&self) -> WindowTheme {
-        self.window_theme
-    }
-
-    /// Set the [`WindowTheme`].
-    pub fn set_window_theme(&mut self, window_theme: WindowTheme) {
-        self.window_theme = window_theme;
-        self.changed_attr = true;
-    }
-
-    /// Create the window disired maximum frame latency.
-    pub fn with_desired_maximum_frame_latency(
-        mut self,
-        desired_maximum_frame_latency: Option<NonZero<u32>>,
-    ) -> Self {
-        self.desired_maximum_frame_latency = desired_maximum_frame_latency;
-        self
-    }
-
-    /// Get the desired maximum frame latency (see [`wgpu::SurfaceConfiguration::desired_maximum_frame_latency`](https://docs.rs/wgpu/latest/wgpu/type.SurfaceConfiguration.html#structfield.desired_maximum_frame_latency)).
-    pub fn desired_maximum_frame_latency(&self) -> Option<NonZero<u32>> {
-        self.desired_maximum_frame_latency
-    }
-
-    /// Set the disired maximum frame latency.
-    pub fn set_desired_maximum_frame_latency(
-        &mut self,
-        desired_maximum_frame_latency: Option<NonZero<u32>>,
-    ) {
-        self.desired_maximum_frame_latency = desired_maximum_frame_latency;
-        self.changed_attr = true;
     }
 }
 

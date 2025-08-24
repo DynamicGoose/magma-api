@@ -46,12 +46,12 @@ impl Windows {
     ) {
         let mut window_attributes = WinitWindow::default_attributes();
 
-        let window_resolution = window.resolution();
-        let window_resize_limit = window.resize_limit();
+        let window_resolution = window.resolution;
+        let window_resize_limit = window.resize_limit;
 
         let mut window_buttons = WindowButtons::empty();
         {
-            let buttons = window.titlebar_buttons();
+            let buttons = window.titlebar_buttons;
             if buttons.minimize() {
                 window_buttons.insert(WindowButtons::MINIMIZE);
             }
@@ -64,12 +64,12 @@ impl Windows {
         }
 
         window_attributes = window_attributes
-            .with_title(window.title())
+            .with_title(&window.title)
             .with_inner_size(PhysicalSize::new(
                 window_resolution.width(),
                 window_resolution.height(),
             ))
-            .with_resizable(window.resizable())
+            .with_resizable(window.resizable)
             .with_min_inner_size(PhysicalSize::new(
                 window_resize_limit.min_width(),
                 window_resize_limit.min_height(),
@@ -78,7 +78,7 @@ impl Windows {
                 window_resize_limit.max_width(),
                 window_resize_limit.max_height(),
             ))
-            .with_fullscreen(match window.mode() {
+            .with_fullscreen(match window.mode {
                 WindowMode::Windowed => None,
                 WindowMode::BorderlessFullscreen(monitor) => {
                     Some(Fullscreen::Borderless(match monitor {
@@ -191,10 +191,10 @@ impl Windows {
                     }))
                 }
             })
-            .with_decorations(window.decorations())
+            .with_decorations(window.decorations)
             .with_enabled_buttons(window_buttons)
-            .with_transparent(window.transparent())
-            .with_theme(match window.window_theme() {
+            .with_transparent(window.transparent)
+            .with_theme(match window.window_theme {
                 WindowTheme::Auto => None,
                 WindowTheme::Light => Some(winit::window::Theme::Light),
                 WindowTheme::Dark => Some(winit::window::Theme::Dark),
@@ -224,7 +224,7 @@ impl Windows {
         // });
 
         winit_window
-            .set_cursor_grab(match window.cursor_mode() {
+            .set_cursor_grab(match window.cursor_mode {
                 magma_windowing::window::CursorMode::Free => winit::window::CursorGrabMode::None,
                 magma_windowing::window::CursorMode::Confined => {
                     winit::window::CursorGrabMode::Confined
@@ -235,26 +235,26 @@ impl Windows {
             })
             .or_else(|_| {
                 // setting cursor mode to confined if locked failed
-                window.set_cursor_mode(magma_windowing::window::CursorMode::Confined);
+                window.cursor_mode = magma_windowing::window::CursorMode::Confined;
                 winit_window.set_cursor_grab(CursorGrabMode::Confined)
             })
             .or_else(|_| {
                 // setting cursor mode to locked if confined failed
-                window.set_cursor_mode(magma_windowing::window::CursorMode::Locked);
+                window.cursor_mode = magma_windowing::window::CursorMode::Locked;
                 winit_window.set_cursor_grab(CursorGrabMode::Locked)
             })
             .unwrap();
 
-        if window.focused() {
+        if window.focused {
             winit_window.focus_window();
         }
 
-        winit_window.set_cursor_visible(window.cursor_visible());
+        winit_window.set_cursor_visible(window.cursor_visible);
 
-        window.set_resolution(WindowResolution::new(
+        window.resolution = WindowResolution::new(
             winit_window.inner_size().width,
             winit_window.inner_size().height,
-        ));
+        );
 
         // add window to self
         let window_id = winit_window.id();
@@ -263,8 +263,6 @@ impl Windows {
             .insert(window_id, WindowWrapper::new(winit_window));
         self.window_to_entity.insert(window_id, entity);
         self.entity_to_window.insert(entity, window_id);
-
-        window.has_window = true;
     }
 
     pub fn update_winit_window(&mut self, window: &mut Window, entity: Entity, world: &World) {
@@ -273,46 +271,45 @@ impl Windows {
             .get(&self.entity_to_window.get(&entity).unwrap())
             .unwrap();
 
-        winit_window.set_title(&window.title());
+        winit_window.set_title(&window.title);
         winit_window
             .request_inner_size(PhysicalSize::new(
-                window.resolution().width(),
-                window.resolution().height(),
+                window.resolution.width(),
+                window.resolution.height(),
             ))
             .or(Some(PhysicalSize {
                 width: 0,
                 height: 0,
             }));
-        winit_window.set_outer_position(match window.position() {
+        winit_window.set_outer_position(match window.position {
             WindowPosition::Auto => {
-                let position = winit_window.outer_position().unwrap();
-                window.set_position(WindowPosition::Pos(IVec2 {
+                let position = winit_window.outer_position().unwrap_or_default();
+                window.position = WindowPosition::Pos(IVec2 {
                     x: position.x,
                     y: position.y,
-                }));
+                });
                 position
             }
             WindowPosition::Center => {
                 let monitor_size = winit_window.current_monitor().unwrap().size();
-                let x = (monitor_size.width as i32 / 2) - (window.resolution().width() as i32 / 2);
-                let y =
-                    (monitor_size.height as i32 / 2) - (window.resolution().height() as i32 / 2);
-                window.set_position(WindowPosition::Pos(IVec2 { x, y }));
+                let x = (monitor_size.width as i32 / 2) - (window.resolution.width() as i32 / 2);
+                let y = (monitor_size.height as i32 / 2) - (window.resolution.height() as i32 / 2);
+                window.position = WindowPosition::Pos(IVec2 { x, y });
                 PhysicalPosition::new(x, y)
             }
             WindowPosition::Pos(vec) => PhysicalPosition::new(vec.x, vec.y),
         });
-        winit_window.set_resizable(window.resizable());
+        winit_window.set_resizable(window.resizable);
         winit_window.set_min_inner_size(Some(PhysicalSize::new(
-            window.resize_limit().min_width(),
-            window.resize_limit().min_height(),
+            window.resize_limit.min_width(),
+            window.resize_limit.min_height(),
         )));
         winit_window.set_max_inner_size(Some(PhysicalSize::new(
-            window.resize_limit().max_width(),
-            window.resize_limit().max_height(),
+            window.resize_limit.max_width(),
+            window.resize_limit.max_height(),
         )));
 
-        match window.mode() {
+        match window.mode {
             WindowMode::Windowed => winit_window.set_fullscreen(None),
             WindowMode::BorderlessFullscreen(monitor) => {
                 winit_window.set_fullscreen(Some(Fullscreen::Borderless(match monitor {
@@ -419,7 +416,7 @@ impl Windows {
                 })));
 
                 winit_window
-                    .set_cursor_grab(match window.cursor_mode() {
+                    .set_cursor_grab(match window.cursor_mode {
                         magma_windowing::window::CursorMode::Free => {
                             winit::window::CursorGrabMode::None
                         }
@@ -432,22 +429,22 @@ impl Windows {
                     })
                     .or_else(|_| {
                         // setting cursor mode to confined if locked failed
-                        window.set_cursor_mode(magma_windowing::window::CursorMode::Confined);
+                        window.cursor_mode = magma_windowing::window::CursorMode::Confined;
                         winit_window.set_cursor_grab(CursorGrabMode::Confined)
                     })
                     .or_else(|_| {
                         // setting cursor mode to locked if confined failed
-                        window.set_cursor_mode(magma_windowing::window::CursorMode::Locked);
+                        window.cursor_mode = magma_windowing::window::CursorMode::Locked;
                         winit_window.set_cursor_grab(CursorGrabMode::Locked)
                     })
                     .unwrap();
 
-                winit_window.set_cursor_visible(window.cursor_visible());
-                winit_window.set_decorations(window.decorations());
+                winit_window.set_cursor_visible(window.cursor_visible);
+                winit_window.set_decorations(window.decorations);
 
                 let mut window_buttons = WindowButtons::empty();
                 {
-                    let buttons = window.titlebar_buttons();
+                    let buttons = window.titlebar_buttons;
                     if buttons.minimize() {
                         window_buttons.insert(WindowButtons::MINIMIZE);
                     }
@@ -460,11 +457,11 @@ impl Windows {
                 }
                 winit_window.set_enabled_buttons(window_buttons);
 
-                if window.focused() {
+                if window.focused {
                     winit_window.focus_window();
                 }
 
-                winit_window.set_theme(match window.window_theme() {
+                winit_window.set_theme(match window.window_theme {
                     WindowTheme::Auto => None,
                     WindowTheme::Light => Some(winit::window::Theme::Light),
                     WindowTheme::Dark => Some(winit::window::Theme::Dark),

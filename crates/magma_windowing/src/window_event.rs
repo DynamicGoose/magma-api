@@ -37,7 +37,9 @@ pub struct WindowClosed {
 
 /// An event signaling a window has been destroyed. The corresponding entity will no longer exist at the time this is emmited.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
-pub struct WindowDestroyed;
+pub struct WindowDestroyed {
+    pub window: Entity,
+}
 
 /// An event signaling that the cursor has moved within a window.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
