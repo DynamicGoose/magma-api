@@ -15,6 +15,9 @@ magma_windowing = { path = "../magma_windowing", version = "0.1.0-alpha.3" }
 magma_math = { path = "../magma_math", version = "0.1.0-alpha" }
 winit = { version = "0.30.12", features = ["rwh_06"] }
 
+[dev-dependencies]
+env_logger = "0.11.8"
+
 # needs to run on main thread bc winit
 [[test]]
 name = "rendering_tests"

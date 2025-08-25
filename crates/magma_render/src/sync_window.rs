@@ -134,34 +134,37 @@ pub(crate) fn sync_windows(world: &World) {
                         format: texture_format,
                         width: extracted_window.physical_width,
                         height: extracted_window.physical_height,
-                        present_mode: match extracted_window.present_mode {
-                            PresentMode::Vsync => feufeu::wgpu::PresentMode::AutoVsync,
-                            PresentMode::NoVsync => feufeu::wgpu::PresentMode::AutoNoVsync,
-                            PresentMode::Fifo => feufeu::wgpu::PresentMode::Fifo,
-                            PresentMode::RelaxedFifo => feufeu::wgpu::PresentMode::FifoRelaxed,
-                            PresentMode::Mailbox => feufeu::wgpu::PresentMode::Mailbox,
-                            PresentMode::Immediate => feufeu::wgpu::PresentMode::Immediate,
-                        },
+                        present_mode: *caps.present_modes.first().unwrap(),
+                        // match extracted_window.present_mode {
+                        //     PresentMode::Vsync => feufeu::wgpu::PresentMode::AutoVsync,
+                        //     PresentMode::NoVsync => feufeu::wgpu::PresentMode::AutoNoVsync,
+                        //     PresentMode::Fifo => feufeu::wgpu::PresentMode::Fifo,
+                        //     PresentMode::RelaxedFifo => feufeu::wgpu::PresentMode::FifoRelaxed,
+                        //     PresentMode::Mailbox => feufeu::wgpu::PresentMode::Mailbox,
+                        //     PresentMode::Immediate => feufeu::wgpu::PresentMode::Immediate,
+                        // },
                         desired_maximum_frame_latency: extracted_window
                             .desired_maximum_frame_latency
                             .map(NonZero::<u32>::get)
                             .unwrap_or(2),
-                        alpha_mode: match extracted_window.alpha_mode {
-                            AlphaMode::Auto => feufeu::wgpu::CompositeAlphaMode::Auto,
-                            AlphaMode::Opaque => feufeu::wgpu::CompositeAlphaMode::Opaque,
-                            AlphaMode::PreMultiplied => {
-                                feufeu::wgpu::CompositeAlphaMode::PreMultiplied
-                            }
-                            AlphaMode::PostMultiplied => {
-                                feufeu::wgpu::CompositeAlphaMode::PostMultiplied
-                            }
-                            AlphaMode::Inherit => feufeu::wgpu::CompositeAlphaMode::Inherit,
-                        },
-                        view_formats: if texture_format.is_srgb() {
-                            vec![texture_format.add_srgb_suffix()]
-                        } else {
-                            vec![]
-                        },
+                        alpha_mode: *caps.alpha_modes.first().unwrap(),
+                        // match extracted_window.alpha_mode {
+                        //     AlphaMode::Auto => feufeu::wgpu::CompositeAlphaMode::Auto,
+                        //     AlphaMode::Opaque => feufeu::wgpu::CompositeAlphaMode::Opaque,
+                        //     AlphaMode::PreMultiplied => {
+                        //         feufeu::wgpu::CompositeAlphaMode::PreMultiplied
+                        //     }
+                        //     AlphaMode::PostMultiplied => {
+                        //         feufeu::wgpu::CompositeAlphaMode::PostMultiplied
+                        //     }
+                        //     AlphaMode::Inherit => feufeu::wgpu::CompositeAlphaMode::Inherit,
+                        // },
+                        view_formats: vec![],
+                        // if texture_format.is_srgb() {
+                        //     vec![texture_format.add_srgb_suffix()]
+                        // } else {
+                        //     vec![]
+                        // },
                     };
 
                     surface.configure(render_state.get_device(), &surface_config);
@@ -259,37 +262,37 @@ pub(crate) fn sync_windows(world: &World) {
                 render_window.present_mode = window.present_mode;
                 render_window.present_mode_changed = true;
 
-                surface_data.config.present_mode = match render_window.present_mode {
-                    PresentMode::Vsync => feufeu::wgpu::PresentMode::AutoVsync,
-                    PresentMode::NoVsync => feufeu::wgpu::PresentMode::AutoNoVsync,
-                    PresentMode::Fifo => feufeu::wgpu::PresentMode::Fifo,
-                    PresentMode::RelaxedFifo => feufeu::wgpu::PresentMode::FifoRelaxed,
-                    PresentMode::Mailbox => feufeu::wgpu::PresentMode::Mailbox,
-                    PresentMode::Immediate => feufeu::wgpu::PresentMode::Immediate,
-                };
+                // surface_data.config.present_mode = match render_window.present_mode {
+                //     PresentMode::Vsync => feufeu::wgpu::PresentMode::AutoVsync,
+                //     PresentMode::NoVsync => feufeu::wgpu::PresentMode::AutoNoVsync,
+                //     PresentMode::Fifo => feufeu::wgpu::PresentMode::Fifo,
+                //     PresentMode::RelaxedFifo => feufeu::wgpu::PresentMode::FifoRelaxed,
+                //     PresentMode::Mailbox => feufeu::wgpu::PresentMode::Mailbox,
+                //     PresentMode::Immediate => feufeu::wgpu::PresentMode::Immediate,
+                // };
             }
 
             if render_window.desired_maximum_frame_latency != window.desired_maximum_frame_latency {
                 render_window.desired_maximum_frame_latency = window.desired_maximum_frame_latency;
                 render_window.frame_latency_changed = true;
 
-                surface_data.config.desired_maximum_frame_latency = render_window
-                    .desired_maximum_frame_latency
-                    .map(NonZero::<u32>::get)
-                    .unwrap_or(2);
+                // surface_data.config.desired_maximum_frame_latency = render_window
+                //     .desired_maximum_frame_latency
+                //     .map(NonZero::<u32>::get)
+                //     .unwrap_or(2);
             }
 
             if render_window.alpha_mode != window.alpha_mode {
                 render_window.alpha_mode = window.alpha_mode;
                 render_window.alpha_mode_changed = true;
 
-                surface_data.config.alpha_mode = match render_window.alpha_mode {
-                    AlphaMode::Auto => feufeu::wgpu::CompositeAlphaMode::Auto,
-                    AlphaMode::Opaque => feufeu::wgpu::CompositeAlphaMode::Opaque,
-                    AlphaMode::PreMultiplied => feufeu::wgpu::CompositeAlphaMode::PreMultiplied,
-                    AlphaMode::PostMultiplied => feufeu::wgpu::CompositeAlphaMode::PostMultiplied,
-                    AlphaMode::Inherit => feufeu::wgpu::CompositeAlphaMode::Inherit,
-                }
+                // surface_data.config.alpha_mode = match render_window.alpha_mode {
+                //     AlphaMode::Auto => feufeu::wgpu::CompositeAlphaMode::Auto,
+                //     AlphaMode::Opaque => feufeu::wgpu::CompositeAlphaMode::Opaque,
+                //     AlphaMode::PreMultiplied => feufeu::wgpu::CompositeAlphaMode::PreMultiplied,
+                //     AlphaMode::PostMultiplied => feufeu::wgpu::CompositeAlphaMode::PostMultiplied,
+                //     AlphaMode::Inherit => feufeu::wgpu::CompositeAlphaMode::Inherit,
+                // }
             }
 
             if render_window.size_changed

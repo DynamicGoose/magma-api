@@ -8,20 +8,20 @@ impl RenderStage for BackgroundStage {
     fn init(_render_state: &mut feufeu::RenderState) {}
 
     fn run(render_state: &feufeu::RenderState) {
-        let mut encoder = render_state.get_device().create_command_encoder(
-            &feufeu::wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
-            },
-        );
-        let outputs = render_state
+        render_state
             .render_world
             .query::<(RenderWindow,)>()
             .unwrap()
             .iter()
-            .map(|entity| {
-                let render_window = entity.get_component::<RenderWindow>().unwrap();
-                let texture = render_window.texture.to_owned().unwrap();
-                let view = render_window.texture_view.to_owned().unwrap();
+            .for_each(|entity| {
+                let mut encoder = render_state.get_device().create_command_encoder(
+                    &feufeu::wgpu::CommandEncoderDescriptor {
+                        label: Some("Render Encoder"),
+                    },
+                );
+                let mut render_window = entity.get_component_mut::<RenderWindow>().unwrap();
+                let texture = render_window.texture.take().unwrap();
+                let view = render_window.texture_view.take().unwrap();
                 {
                     let _render_pass =
                         encoder.begin_render_pass(&feufeu::wgpu::RenderPassDescriptor {
@@ -45,12 +45,10 @@ impl RenderStage for BackgroundStage {
                             timestamp_writes: None,
                         });
                 }
-                texture
-            })
-            .collect::<Vec<_>>();
-        render_state
-            .get_queue()
-            .submit(std::iter::once(encoder.finish()));
-        outputs.into_iter().for_each(|o| o.present());
+                render_state
+                    .get_queue()
+                    .submit(std::iter::once(encoder.finish()));
+                texture.present();
+            });
     }
 }

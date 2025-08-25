@@ -1,4 +1,4 @@
-use feufeu::RenderState;
+use feufeu::{RenderState, wgpu::Features};
 use magma_app::{
     App, AppSchedule,
     module::Module,
@@ -7,7 +7,7 @@ use magma_app::{
 };
 use magma_windowing::Window;
 use magma_winit::{WinitModule, WrappedApp};
-use std::time::Instant;
+use std::{hash::Hash, time::Instant};
 use winit::{
     application::ApplicationHandler,
     event_loop::{ControlFlow, EventLoop},
@@ -88,6 +88,7 @@ impl ApplicationHandler for RenderApp {
     }
 
     fn about_to_wait(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        let all = Instant::now();
         self.app.winit_update(event_loop);
 
         self.app.app.run_schedule::<SyncSchedule>().unwrap();
@@ -102,9 +103,11 @@ impl ApplicationHandler for RenderApp {
             || {
                 (self.app.app.world.get_resource::<Renderer>().unwrap().0)(
                     &self.app.app.world.get_resource::<RenderState>().unwrap(),
-                )
+                );
             },
         );
+
+        println!("complete update took {}µs", all.elapsed().as_micros());
     }
 }
 
@@ -118,12 +121,7 @@ fn rendering_update_loop(app: App) {
 }
 
 fn default_renderer(render_state: &RenderState) {
-    let now = Instant::now();
     render_state.run_stage::<BackgroundStage>().unwrap();
-    println!(
-        "{}",
-        1.0 / ((1.0 / 1000000.0) * now.elapsed().as_micros() as f32)
-    );
 }
 
 pub struct SyncSchedule;

@@ -4,14 +4,14 @@ use magma_render::sync_entity::SyncToRenderWorld;
 use magma_windowing::Window;
 
 fn main() {
+    env_logger::init();
+
     let mut app = App::new();
     app.add_module(RenderModule);
     // app.add_module(TestModule);
-    for _ in 0..3 {
-        app.world
-            .create_entity((Window::new(), SyncToRenderWorld))
-            .unwrap();
-    }
+    app.world
+        .create_entity((Window::new(), SyncToRenderWorld))
+        .unwrap();
     app.run();
 }
 
