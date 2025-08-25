@@ -1,14 +1,15 @@
 use magma_app::{App, World, module::Module, schedule::Update};
 use magma_render::RenderModule;
+use magma_render::sync_entity::SyncToRenderWorld;
 use magma_windowing::Window;
 
 fn main() {
     let mut app = App::new();
     app.add_module(RenderModule);
-    app.add_module(TestModule);
+    // app.add_module(TestModule);
     for _ in 0..3 {
         app.world
-            .create_entity((Window::new().with_title("Test Window"),))
+            .create_entity((Window::new(), SyncToRenderWorld))
             .unwrap();
     }
     app.run();
@@ -19,7 +20,7 @@ struct TestModule;
 impl Module for TestModule {
     fn setup(self, app: &mut App) {
         app.world.add_resource(0_u32).unwrap();
-        app.add_systems::<Update>(&[(count_exit, "exit", &[])])
+        app.add_systems::<Update>(vec![(count_exit, "exit".to_string(), vec![])])
             .unwrap();
     }
 }

@@ -1,6 +1,6 @@
 use feufeu::RenderStage;
 
-use crate::extracted_windows::ExtractedWindows;
+use crate::sync_window::RenderWindow;
 
 pub struct BackgroundStage;
 
@@ -15,16 +15,13 @@ impl RenderStage for BackgroundStage {
         );
         let outputs = render_state
             .render_world
-            .get_resource::<ExtractedWindows>()
+            .query::<(RenderWindow,)>()
             .unwrap()
-            .iter_windows()
-            .map(|extracted_window| {
-                // println!("entity: {}", surface_entity.id());
-                let surface = &extracted_window.1;
-                let output = surface.get_current_texture().unwrap();
-                let view = output
-                    .texture
-                    .create_view(&feufeu::wgpu::TextureViewDescriptor::default());
+            .iter()
+            .map(|entity| {
+                let render_window = entity.get_component::<RenderWindow>().unwrap();
+                let texture = render_window.texture.to_owned().unwrap();
+                let view = render_window.texture_view.to_owned().unwrap();
                 {
                     let _render_pass =
                         encoder.begin_render_pass(&feufeu::wgpu::RenderPassDescriptor {
@@ -48,7 +45,7 @@ impl RenderStage for BackgroundStage {
                             timestamp_writes: None,
                         });
                 }
-                output
+                texture
             })
             .collect::<Vec<_>>();
         render_state
