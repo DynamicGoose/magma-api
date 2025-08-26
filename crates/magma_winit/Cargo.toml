@@ -16,6 +16,13 @@ magma_windowing = { path = "../magma_windowing", version = "0.1.0-alpha.3" }
 magma_input = { path = "../magma_input", version = "0.1.0-alpha.2" }
 winit = "0.30.12"
 
+[features]
+default = ["x11", "wayland"]
+
+x11 = ["winit/x11"]
+wayland = ["winit/wayland", "winit/wayland-dlopen", "winit/wayland-csd-adwaita"]
+android = ["winit/android-game-activity", "winit/android-native-activity"]
+
 # These need to be run on the main thread, which normal tests don't do
 [[test]]
 name = "winit_tests"

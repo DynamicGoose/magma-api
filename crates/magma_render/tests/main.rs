@@ -8,10 +8,12 @@ fn main() {
 
     let mut app = App::new();
     app.add_module(RenderModule);
-    // app.add_module(TestModule);
-    app.world
-        .create_entity((Window::new(), SyncToRenderWorld))
-        .unwrap();
+    app.add_module(TestModule);
+    for _ in 0..2 {
+        app.world
+            .create_entity((Window::new(), SyncToRenderWorld))
+            .unwrap();
+    }
     app.run();
 }
 
@@ -28,7 +30,7 @@ impl Module for TestModule {
 fn count_exit(world: &World) {
     let mut counter = world.get_resource_mut::<u32>().unwrap();
 
-    if *counter >= 1000 {
+    if *counter >= 500 {
         world
             .query::<(Window,)>()
             .unwrap()

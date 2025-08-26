@@ -3,7 +3,7 @@ pub use monitor::{Monitor, PrimaryMonitor};
 pub use window::{ClosingWindow, Window};
 use window_event::*;
 
-use crate::systems::{delete_pending_windows, focused, mark_closed_windows, moved, resized};
+use crate::systems::delete_pending_windows;
 
 /// ECS Monitor representation
 pub mod monitor;
@@ -44,30 +44,6 @@ impl Module for WindowingModule {
         app.add_systems::<PostUpdate>(vec![(
             delete_pending_windows,
             "delete_pending_windows".to_string(),
-            vec![],
-        )])
-        .unwrap();
-
-        app.add_event_systems::<WindowCloseRequested>(vec![(
-            mark_closed_windows,
-            "mark_closing_windows".to_string(),
-            vec![],
-        )])
-        .unwrap();
-
-        app.add_event_systems::<WindowResized>(vec![(
-            resized,
-            "resized_windows".to_string(),
-            vec![],
-        )])
-        .unwrap();
-
-        app.add_event_systems::<WindowMoved>(vec![(moved, "moved_windows".to_string(), vec![])])
-            .unwrap();
-
-        app.add_event_systems::<WindowFocused>(vec![(
-            focused,
-            "focused_windows".to_string(),
             vec![],
         )])
         .unwrap();

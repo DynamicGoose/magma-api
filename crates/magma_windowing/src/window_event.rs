@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use magma_app::magma_ecs::entities::Entity;
 use magma_math::IVec2;
 
-use crate::window::WindowTheme;
+use crate::window::{CursorPosition, WindowTheme};
 
 /// An event for signaling a window resize.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
@@ -42,10 +42,10 @@ pub struct WindowDestroyed {
 }
 
 /// An event signaling that the cursor has moved within a window.
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Default)]
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub struct CursorMoved {
     pub window: Entity,
-    pub position: IVec2,
+    pub position: CursorPosition,
 }
 
 /// An event signaling the cursor has entered a winbdow.

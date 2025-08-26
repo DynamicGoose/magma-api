@@ -4,7 +4,7 @@ use magma_app::entities::Entity;
 use magma_math::{IVec2, UVec2};
 
 /// The Window Component
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Window {
     pub title: String,
     pub name: Option<String>,
@@ -14,6 +14,7 @@ pub struct Window {
     pub resize_limit: WindowResizeLimit,
     pub mode: WindowMode,
     pub cursor_mode: CursorMode,
+    pub cursor_position: CursorPosition,
     pub cursor_visible: bool,
     pub decorations: bool,
     pub titlebar_buttons: TitlebarButtons,
@@ -37,6 +38,7 @@ impl Default for Window {
             resize_limit: Default::default(),
             mode: Default::default(),
             cursor_mode: Default::default(),
+            cursor_position: Default::default(),
             cursor_visible: true,
             decorations: true,
             titlebar_buttons: Default::default(),
@@ -123,8 +125,8 @@ pub struct WindowResizeLimit {
 impl Default for WindowResizeLimit {
     fn default() -> Self {
         Self {
-            min_width: 144,
-            min_height: 256,
+            min_width: u32::MIN,
+            min_height: u32::MIN,
             max_width: u32::MAX,
             max_height: u32::MAX,
         }
@@ -171,6 +173,13 @@ impl WindowResizeLimit {
     pub const fn max_size(&self) -> UVec2 {
         UVec2::new(self.max_width, self.max_height)
     }
+}
+
+/// Cursor position in the window
+#[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Default)]
+pub struct CursorPosition {
+    pub x: f64,
+    pub y: f64,
 }
 
 /// The windowing mode of the window.

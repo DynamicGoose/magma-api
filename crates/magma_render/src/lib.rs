@@ -1,4 +1,4 @@
-use feufeu::{RenderState, wgpu::Features};
+use feufeu::RenderState;
 use magma_app::{
     App, AppSchedule,
     module::Module,
@@ -7,14 +7,14 @@ use magma_app::{
 };
 use magma_windowing::Window;
 use magma_winit::{WinitModule, WrappedApp};
-use std::{hash::Hash, time::Instant};
 use winit::{
     application::ApplicationHandler,
     event_loop::{ControlFlow, EventLoop},
 };
 
 use crate::{
-    render_stages::background::BackgroundStage, sync_entity::SyncEntityModule,
+    render_stages::background::BackgroundStage,
+    sync_entity::{SyncEntityModule, SyncToRenderWorld},
     sync_window::SyncWindowsModule,
 };
 
@@ -88,7 +88,6 @@ impl ApplicationHandler for RenderApp {
     }
 
     fn about_to_wait(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        let all = Instant::now();
         self.app.winit_update(event_loop);
 
         self.app.app.run_schedule::<SyncSchedule>().unwrap();
@@ -106,13 +105,13 @@ impl ApplicationHandler for RenderApp {
                 );
             },
         );
-
-        println!("complete update took {}µs", all.elapsed().as_micros());
     }
 }
 
 fn rendering_update_loop(app: App) {
-    app.world.create_entity((Window::new(),)).unwrap();
+    app.world
+        .create_entity((Window::new(), SyncToRenderWorld))
+        .unwrap();
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
     let mut app = RenderApp::new(app);
