@@ -9,8 +9,7 @@ use std::{
 
 use magma_ecs::{
     error::EventError,
-    rayon::iter::{IntoParallelRefIterator, ParallelIterator},
-    systems::{Systems, dispatcher::Dispatcher},
+    systems::{IntoSystem, SystemGraph, dispatcher::Dispatcher, system_params::SystemParam},
 };
 use module::Module;
 
@@ -29,15 +28,13 @@ pub mod module;
 /// The [`AppSchedule`] trait and default schedules.
 pub mod schedule;
 
-type SystemVec = Vec<(fn(&World), String, Vec<String>)>;
-
 /// The [`App`] struct holds all the apps data and defines the necessary functions and methods to operate on it.
 pub struct App {
     pub world: World,
     runner: fn(App),
     modules: Vec<TypeId>,
-    systems: HashMap<TypeId, (Systems, Dispatcher)>,
-    event_systems: HashMap<TypeId, (Systems, Dispatcher)>,
+    systems: HashMap<TypeId, (SystemGraph, Dispatcher)>,
+    event_systems: HashMap<TypeId, (SystemGraph, Dispatcher)>,
 }
 
 impl Default for App {
@@ -96,16 +93,19 @@ impl App {
 
     /// Register an [`AppSchedule`].
     pub fn register_schedule<S: AppSchedule + 'static>(&mut self) {
-        self.systems.insert(TypeId::of::<S>(), Default::default());
+        self.systems.insert(
+            TypeId::of::<S>(),
+            (SystemGraph::new(), Dispatcher::default()),
+        );
     }
 
     /// Run an [`AppSchedule`].
-    pub fn run_schedule<S: AppSchedule + 'static>(&self) -> Result<(), ScheduleError> {
+    pub fn run_schedule<S: AppSchedule + 'static>(&mut self) -> Result<(), ScheduleError> {
         self.systems
-            .get(&TypeId::of::<S>())
+            .get_mut(&TypeId::of::<S>())
             .ok_or(ScheduleError::ScheduleNotRegistered)?
             .1
-            .dispatch(&self.world);
+            .dispatch(&mut self.world);
         Ok(())
     }
 
@@ -123,47 +123,57 @@ impl App {
     use magma_app::schedule::Startup;
 
     let mut app = App::new();
-    app.add_systems::<Startup>(vec![(example_system, "example_system".to_string(), vec![])]).unwrap();
+    app.add_system(Startup, example_system, vec![]).unwrap();
 
-    fn example_system(_world: &World) {
+    fn example_system(world: &mut World) {
         // E.g. change something in the World
     }
     ```
     */
-    pub fn add_systems<S: AppSchedule + 'static>(
+    pub fn add_system<S: AppSchedule + 'static, In: SystemParam, Marker>(
         &mut self,
-        systems: SystemVec,
+        schedule: S,
+        system: impl IntoSystem<In, Marker>,
+        deps: Vec<String>,
     ) -> Result<(), ScheduleError> {
         let schedule = self
             .systems
-            .get_mut(&TypeId::of::<S>())
+            .get_mut(&schedule.type_id())
             .ok_or(ScheduleError::ScheduleNotRegistered)?;
-        for (run, name, deps) in systems {
-            schedule.0.add(run, name, deps);
-        }
-
-        schedule.1 = schedule.0.to_owned().build_dispatcher();
+        schedule.0.add_system(system, deps).unwrap();
+        schedule.1 = schedule
+            .0
+            .to_owned()
+            .into_dispatcher(&mut self.world)
+            .unwrap();
         Ok(())
     }
 
     pub fn register_event<E: Any + Send + Sync + Clone>(&mut self) {
         self.world.register_event::<E>();
-        self.event_systems
-            .insert(TypeId::of::<E>(), (Systems::new(), Dispatcher::default()));
+        self.event_systems.insert(
+            TypeId::of::<E>(),
+            (SystemGraph::new(), Dispatcher::default()),
+        );
     }
 
-    pub fn add_event_systems<E: Any + Send + Sync + Clone>(
+    pub fn add_event_system<E: Any + Send + Sync + Clone, In: SystemParam, Marker>(
         &mut self,
-        systems: SystemVec,
+        event: E,
+        system: impl IntoSystem<In, Marker>,
+        deps: Vec<String>,
     ) -> Result<(), EventError> {
         let event_systems = self
             .event_systems
-            .get_mut(&TypeId::of::<E>())
+            .get_mut(&event.type_id())
             .ok_or(EventError::EventNotRegistered)?;
-        for (run, name, deps) in systems {
-            event_systems.0.add(run, name, deps);
-        }
-        event_systems.1 = event_systems.0.to_owned().build_dispatcher();
+
+        event_systems.0.add_system(system, deps).unwrap();
+        event_systems.1 = event_systems
+            .0
+            .to_owned()
+            .into_dispatcher(&mut self.world)
+            .unwrap();
         Ok(())
     }
 
@@ -173,15 +183,18 @@ impl App {
     }
 
     /// Process pending events.
-    pub fn process_events(&self) {
+    pub fn process_events(&mut self) {
+        let world = self.world.get_unsafe_mut();
         let events = self.world.get_pending_events();
         // dispatch systems for events
-        events.par_iter().for_each(|type_id| {
-            self.event_systems
-                .get(type_id)
-                .unwrap()
-                .1
-                .dispatch(&self.world);
+        events.iter().for_each(|type_id| {
+            unsafe {
+                self.event_systems
+                    .get_mut(type_id)
+                    .unwrap()
+                    .1
+                    .dispatch_unsafe(world)
+            };
         });
 
         self.world.clear_events();
@@ -193,7 +206,7 @@ impl App {
     }
 }
 
-fn default_runner(app: App) {
+fn default_runner(mut app: App) {
     app.run_schedule::<Startup>().unwrap();
     loop {
         app.run_schedule::<PreUpdate>().unwrap();

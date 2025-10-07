@@ -82,10 +82,10 @@ fn destroyed_event() {
     let mut app = App::new();
     app.add_module(WindowingModule);
 
-    app.world.create_entity((Window::new(),)).unwrap();
+    let window = app.world.create_entity((Window::new(),)).unwrap();
 
     // push event
-    app.world.send_event(WindowDestroyed).unwrap();
+    app.world.send_event(WindowDestroyed { window }).unwrap();
 }
 
 #[test]
@@ -99,7 +99,7 @@ fn cursor_moved_event() {
     app.world
         .send_event(CursorMoved {
             window,
-            position: IVec2::new(16, 16),
+            position: window::CursorPosition { x: 16.0, y: 16.0 },
         })
         .unwrap();
 }

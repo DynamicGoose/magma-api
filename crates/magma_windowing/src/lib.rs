@@ -41,11 +41,7 @@ impl Module for WindowingModule {
         app.register_event::<WindowMoved>();
         app.register_event::<WindowThemeChanged>();
 
-        app.add_systems::<PostUpdate>(vec![(
-            delete_pending_windows,
-            "delete_pending_windows".to_string(),
-            vec![],
-        )])
-        .unwrap();
+        app.add_system(PostUpdate, delete_pending_windows, vec![])
+            .unwrap();
     }
 }

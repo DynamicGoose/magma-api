@@ -1,8 +1,9 @@
 /// The names of keyboard keys
-#[derive(Clone, PartialEq, PartialOrd, Ord, Eq, Hash, Debug)]
+#[derive(Clone, PartialEq, PartialOrd, Ord, Eq, Hash, Debug, Default)]
 pub enum Key {
     Character(String),
     Dead(Option<char>),
+    #[default]
     Unidentified, // support for native keys in future release
     Alt,
     AltGraph,
@@ -313,8 +314,9 @@ pub enum Key {
 }
 
 /// Possible key codes
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub enum KeyCode {
+    #[default]
     Unidentified, // support for native key codes in future release
     Backquote,
     Backslash,

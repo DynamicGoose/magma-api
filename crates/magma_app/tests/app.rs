@@ -4,6 +4,7 @@ use magma_app::{
     App, World,
     schedule::{Startup, Update},
 };
+use magma_ecs::{component::Component, events::EventSender, resources::ResMut};
 
 #[test]
 fn add_systems() {
@@ -14,16 +15,8 @@ fn add_systems() {
     app.world.register_component::<Rotation>();
     app.world.register_component::<Velocity>();
 
-    app.world.add_resource(10_u32).unwrap();
-
-    app.add_systems::<Startup>(vec![(system_startup, "system_startup".to_string(), vec![])])
-        .unwrap();
-    app.add_systems::<Update>(vec![(
-        update_resource,
-        "update_resource".to_string(),
-        vec![],
-    )])
-    .unwrap();
+    app.add_system(Startup, system_startup, vec![]).unwrap();
+    app.add_system(Update, update_resource, vec![]).unwrap();
     app.set_runner(test_runner);
     app.run();
 }
@@ -32,22 +25,15 @@ fn add_systems() {
 fn event_systems() {
     let mut app = App::new();
     app.register_event::<Event>();
-    app.add_event_systems::<Event>(vec![(
-        update_resource,
-        "update_resource".to_string(),
-        vec![],
-    )])
-    .unwrap();
-    app.world.add_resource(10_u32).unwrap();
-
-    app.add_systems::<Update>(vec![(event_system, "event_system".to_string(), vec![])])
+    app.add_event_system(Event, update_resource, vec![])
         .unwrap();
+    app.add_system(Update, event_system, vec![]).unwrap();
 
     app.set_runner(test_runner);
     app.run();
 }
 
-fn system_startup(world: &World) {
+fn system_startup(world: &mut World) {
     let time = Instant::now();
 
     for _ in 0..1000 {
@@ -69,30 +55,33 @@ fn system_startup(world: &World) {
     println!("{}", elapsed.as_micros());
 }
 
-fn update_resource(world: &World) {
-    let mut res = world.get_resource_mut::<u32>().unwrap();
+fn update_resource(mut res: ResMut<u32>) {
     *res += 1;
 }
 
-fn event_system(world: &World) {
-    world.send_event(Event).unwrap();
+fn event_system(mut events: EventSender<Event>) {
+    events.send(Event);
 }
 
-fn test_runner(app: App) {
+fn test_runner(mut app: App) {
     app.run_schedule::<Startup>().unwrap();
     for _ in 0..10 {
         app.run_schedule::<Update>().unwrap();
         app.process_events();
     }
-    assert_eq!(20, *app.world.get_resource::<u32>().unwrap());
+    assert_eq!(10, *app.world.get_resource::<u32>().unwrap());
 }
 
+#[derive(Component)]
 #[allow(dead_code)]
 struct Transform([[i32; 4]; 4]);
+#[derive(Component)]
 #[allow(dead_code)]
 struct Position((i32, i32, i32));
+#[derive(Component)]
 #[allow(dead_code)]
 struct Rotation((i32, i32, i32));
+#[derive(Component)]
 #[allow(dead_code)]
 struct Velocity((i32, i32, i32));
 

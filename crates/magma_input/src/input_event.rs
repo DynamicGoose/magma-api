@@ -7,7 +7,7 @@ use magma_app::entities::Entity;
 use magma_math::Vec2;
 
 /// Event emmited for keyboard input
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub struct KeyboardInput {
     /// key name
     pub key: Key,
@@ -23,7 +23,7 @@ pub struct KeyboardInput {
 }
 
 /// Event emmited when a mouse button is pressed
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub struct MouseButtonInput {
     /// The button of the mouse
     pub button: MouseButton,
@@ -34,7 +34,7 @@ pub struct MouseButtonInput {
 }
 
 /// Event emmited when the mouse scroll wheel is used
-#[derive(Clone, Copy, PartialEq, PartialOrd, Debug)]
+#[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Default)]
 pub struct MouseScrollInput {
     /// The unit of the scroll event. Can be either in pixels or lines.
     pub unit: MouseScrollUnit,

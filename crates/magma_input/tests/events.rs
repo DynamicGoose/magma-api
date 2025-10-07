@@ -1,4 +1,4 @@
-use magma_app::App;
+use magma_app::{App, magma_ecs::component::Component};
 use magma_input::{
     InputModule,
     input_event::{KeyboardInput, MouseButtonInput, MouseMotionInput, MouseScrollInput},
@@ -70,4 +70,5 @@ fn mouse_motion_input() {
         .unwrap();
 }
 
+#[derive(Component)]
 struct DummyWindow;

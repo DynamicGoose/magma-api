@@ -1,5 +1,5 @@
 use magma_app::{App, module::Module, schedule::Startup};
-use magma_ecs::World;
+use magma_ecs::resources::Res;
 
 #[test]
 fn add_module() {
@@ -13,11 +13,10 @@ pub struct TestModule;
 impl Module for TestModule {
     fn setup(self, app: &mut magma_app::App) {
         app.world.add_resource(10_u32).unwrap();
-        app.add_systems::<Startup>(vec![(test_system, "test_system".to_string(), vec![])])
-            .unwrap();
+        app.add_system(Startup, test_system, vec![]).unwrap();
     }
 }
 
-fn test_system(world: &World) {
-    assert_eq!(*world.get_resource::<u32>().unwrap(), 10)
+fn test_system(res: Res<u32>) {
+    assert_eq!(*res, 10)
 }

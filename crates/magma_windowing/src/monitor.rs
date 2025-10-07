@@ -1,7 +1,8 @@
+use magma_app::magma_ecs::component::Component;
 use magma_math::{IVec2, UVec2};
 
 /// An ECS component representing a monitor
-#[derive(Clone, PartialEq, Debug, Default)]
+#[derive(Component, Clone, PartialEq, Debug, Default)]
 pub struct Monitor {
     /// Optional name of the monitor
     pub name: Option<String>,
@@ -29,7 +30,7 @@ impl Monitor {
 }
 
 /// Marker component for the primary monitor
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub struct PrimaryMonitor;
 
 /// Representation for a video mode

@@ -1,10 +1,10 @@
 use std::num::NonZero;
 
-use magma_app::entities::Entity;
+use magma_app::{entities::Entity, magma_ecs::component::Component};
 use magma_math::{IVec2, UVec2};
 
 /// The Window Component
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Component, Clone, PartialEq, Debug)]
 pub struct Window {
     pub title: String,
     pub name: Option<String>,
@@ -60,7 +60,7 @@ impl Window {
 }
 
 /// Marks a window that has been requested to close
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub struct ClosingWindow;
 
 /// Position of a window
