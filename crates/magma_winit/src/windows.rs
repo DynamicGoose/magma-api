@@ -36,11 +36,14 @@ impl Windows {
     }
 
     pub fn remove_window(&mut self, window: Entity) -> Option<WindowWrapper<WinitWindow>> {
-        let window_id = *self.entity_to_window.get(&window).unwrap();
-
-        self.entity_to_window.remove(&window);
-        self.window_to_entity.remove(&window_id);
-        self.winit_windows.remove(&window_id)
+        if let Some(window_id) = self.entity_to_window.get(&window) {
+            self.window_to_entity.remove(&window_id);
+            let wrapped_window = self.winit_windows.remove(&window_id);
+            self.entity_to_window.remove(&window);
+            wrapped_window
+        } else {
+            None
+        }
     }
 
     pub fn create_winit_window(

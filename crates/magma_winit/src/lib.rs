@@ -5,7 +5,7 @@ This crate integrates [`winit`] into the Magma API in order to manage applicatio
 
 ```
 # use std::error::Error;
-# use magma_app::{magma_ecs::entities::Entity, App, schedule::Update, World};
+# use magma_app::{magma_ecs::{query::{QueryMut, With}, entities::Entity}, App, schedule::Update, World};
 # use magma_windowing::Window;
 # use magma_winit::WinitModule;
 fn main() -> Result<(), Box<dyn Error>> {
@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     app.add_module(WinitModule);
     // Add the system to close created windows.
     // Windows should not be closed in a startup system, bc it might cause the app to hang.
-    app.add_systems::<Update>(vec![(close_windows, "close_windows".to_string(), vec![])]).unwrap();
+    app.add_system(Update, close_windows, vec![]).unwrap();
     // create a window
     // The winit module will create a single window on startup. That means there will now be two.
     let mut window = Window::new();
@@ -24,18 +24,18 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 // system for closing the opened windows
-fn close_windows(world: &World) {
+fn close_windows(query: QueryMut<With<Window>>) {
     // close windows
-    world
-        .query::<(Window,)>()
-        .unwrap()
-        .iter()
-        .for_each(|window| window.delete());
+    for window in query {
+        window.delete();
+    }
 }
 ```
 */
 
-use magma_app::World;
+use magma_app::entities::Entity;
+use magma_app::magma_ecs::component::Component;
+use magma_app::magma_ecs::query::Added;
 use magma_app::schedule::{PostUpdate, PreUpdate, Startup, Update};
 use magma_app::{App, module::Module};
 use magma_input::InputModule;
@@ -45,25 +45,21 @@ use magma_input::input_event::{
 use magma_math::{IVec2, UVec2, Vec2};
 use magma_windowing::monitor::VideoMode;
 use magma_windowing::raw_handle::WindowWrapper;
-use magma_windowing::window::{
-    CursorMode, CursorPosition, VideoModeSelection, WindowMode, WindowPosition, WindowResolution,
-    WindowTheme,
-};
+use magma_windowing::window::{CursorPosition, WindowResolution, WindowTheme};
 use magma_windowing::{ClosingWindow, Monitor, PrimaryMonitor, window_event::*};
 use magma_windowing::{Window, WindowingModule};
 use windows::Windows;
-use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event_loop::ActiveEventLoop;
-use winit::monitor::VideoModeHandle;
-use winit::window::{CursorGrabMode, Fullscreen, Window as WinitWindow};
+use winit::window::Window as WinitWindow;
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
     event_loop::{ControlFlow, EventLoop},
 };
 
-use crate::windows::convert_titlebar_buttons;
+use crate::systems::{winit_drop_windows, winit_update_changed_windows};
 
+mod systems;
 pub mod windows;
 
 /**
@@ -76,10 +72,14 @@ impl Module for WinitModule {
         app.set_runner(winit_event_loop);
         app.add_module(WindowingModule);
         app.add_module(InputModule);
+        app.add_system(PreUpdate, winit_update_changed_windows, vec![])
+            .unwrap();
+        app.add_system(PreUpdate, winit_drop_windows, vec![])
+            .unwrap();
 
         app.world.register_component::<CachedWindow>();
-        app.world.add_resource(Windows::new()).unwrap();
-        app.world.add_resource(WindowsToDrop(vec![])).unwrap();
+        app.world
+            .register_query::<(Entity, &Window), Added<Window>>("winit_update".to_string());
     }
 }
 
@@ -134,19 +134,33 @@ impl ApplicationHandler for WrappedApp {
         window_id: winit::window::WindowId,
         event: WindowEvent,
     ) {
-        let windows = self.app.world.get_resource::<Windows>().unwrap();
-        let Some(window_entity) = windows.window_to_entity.get(&window_id) else {
+        let Some(window_entity) = self
+            .app
+            .world
+            .get_resource::<Windows>()
+            .unwrap()
+            .window_to_entity
+            .get(&window_id)
+            .copied()
+        else {
             return;
         };
 
-        let Ok(mut window) = self.app.world.get_component_mut::<Window>(*window_entity) else {
+        if event == WindowEvent::CloseRequested {
+            self.app
+                .world
+                .assign_components(ClosingWindow, window_entity)
+                .unwrap();
+        }
+
+        let Ok(mut window) = self.app.world.get_component_mut::<Window>(window_entity) else {
             return;
         };
 
         let Ok(mut cached_window) = self
             .app
             .world
-            .get_component_mut::<CachedWindow>(*window_entity)
+            .get_component_mut::<CachedWindow>(window_entity)
         else {
             return;
         };
@@ -160,7 +174,7 @@ impl ApplicationHandler for WrappedApp {
                 self.app
                     .world
                     .send_event(WindowResized {
-                        window: *window_entity,
+                        window: window_entity,
                         width: physical_size.width,
                         height: physical_size.height,
                     })
@@ -194,12 +208,8 @@ impl ApplicationHandler for WrappedApp {
             WindowEvent::CloseRequested => {
                 self.app
                     .world
-                    .assign_components((ClosingWindow,), *window_entity)
-                    .unwrap();
-                self.app
-                    .world
                     .send_event(WindowCloseRequested {
-                        window: *window_entity,
+                        window: window_entity,
                     })
                     .unwrap();
             }
@@ -207,7 +217,7 @@ impl ApplicationHandler for WrappedApp {
                 .app
                 .world
                 .send_event(FileDragDrop::Dropped {
-                    window: *window_entity,
+                    window: window_entity,
                     path: path_buf,
                 })
                 .unwrap(),
@@ -215,7 +225,7 @@ impl ApplicationHandler for WrappedApp {
                 .app
                 .world
                 .send_event(FileDragDrop::Hovered {
-                    window: *window_entity,
+                    window: window_entity,
                     path: path_buf,
                 })
                 .unwrap(),
@@ -223,7 +233,7 @@ impl ApplicationHandler for WrappedApp {
                 .app
                 .world
                 .send_event(FileDragDrop::HoverCanceled {
-                    window: *window_entity,
+                    window: window_entity,
                 })
                 .unwrap(),
             WindowEvent::Focused(focus) => {
@@ -232,7 +242,7 @@ impl ApplicationHandler for WrappedApp {
                 self.app
                     .world
                     .send_event(WindowFocused {
-                        window: *window_entity,
+                        window: window_entity,
                         focus,
                     })
                     .unwrap()
@@ -247,7 +257,7 @@ impl ApplicationHandler for WrappedApp {
                 self.app
                     .world
                     .send_event(CursorMoved {
-                        window: *window_entity,
+                        window: window_entity,
                         position: pos,
                     })
                     .unwrap()
@@ -256,14 +266,14 @@ impl ApplicationHandler for WrappedApp {
                 .app
                 .world
                 .send_event(CursorEntered {
-                    window: *window_entity,
+                    window: window_entity,
                 })
                 .unwrap(),
             WindowEvent::CursorLeft { .. } => self
                 .app
                 .world
                 .send_event(CursorLeft {
-                    window: *window_entity,
+                    window: window_entity,
                 })
                 .unwrap(),
             WindowEvent::ThemeChanged(theme) => {
@@ -276,7 +286,7 @@ impl ApplicationHandler for WrappedApp {
                 self.app
                     .world
                     .send_event(WindowThemeChanged {
-                        window: *window_entity,
+                        window: window_entity,
                         theme: theme,
                     })
                     .unwrap()
@@ -286,10 +296,10 @@ impl ApplicationHandler for WrappedApp {
                 .world
                 .send_event(match occlusion {
                     true => WindowOcclusion::Occluded {
-                        window: *window_entity,
+                        window: window_entity,
                     },
                     false => WindowOcclusion::NotOccluded {
-                        window: *window_entity,
+                        window: window_entity,
                     },
                 })
                 .unwrap(),
@@ -305,7 +315,7 @@ impl ApplicationHandler for WrappedApp {
                         winit::event::ElementState::Released => magma_input::ButtonState::Released,
                     },
                     repeat: event.repeat,
-                    window: *window_entity,
+                    window: window_entity,
                 })
                 .unwrap(),
             WindowEvent::MouseInput { state, button, .. } => self
@@ -330,7 +340,7 @@ impl ApplicationHandler for WrappedApp {
                         winit::event::ElementState::Pressed => magma_input::ButtonState::Pressed,
                         winit::event::ElementState::Released => magma_input::ButtonState::Pressed,
                     },
-                    window: *window_entity,
+                    window: window_entity,
                 })
                 .unwrap(),
             WindowEvent::MouseWheel { delta, .. } => self
@@ -353,7 +363,7 @@ impl ApplicationHandler for WrappedApp {
                         winit::event::MouseScrollDelta::LineDelta(_, y) => y,
                         winit::event::MouseScrollDelta::PixelDelta(delta) => delta.y as f32,
                     },
-                    window: *window_entity,
+                    window: window_entity,
                 })
                 .unwrap(),
             _ => (),
@@ -392,73 +402,51 @@ impl ApplicationHandler for WrappedApp {
 impl WrappedApp {
     pub fn winit_update(&mut self, event_loop: &ActiveEventLoop) {
         // create winit windows for new window components
-        let mut windows = self.app.world.get_resource_mut::<Windows>().unwrap();
-        self.app
+        for (entity, cached_window) in self
+            .app
             .world
-            .query_changed::<(Window,)>()
-            .unwrap()
-            .iter()
-            .for_each(|window_entity| {
-                if let Some(mut winit_window) = windows.get_window_mut(&window_entity.into()) {
-                    let mut cached_window =
-                        window_entity.get_component_mut::<CachedWindow>().unwrap();
-                    let window = window_entity.get_component::<Window>().unwrap();
-
-                    if *window != cached_window.window {
-                        update_changed(
-                            &window,
-                            &mut cached_window,
-                            &mut winit_window,
-                            &self.app.world,
-                        );
-                    }
-                } else {
-                    let window = window_entity.get_component::<Window>().unwrap();
-                    windows.create_winit_window(
-                        &self.app.world,
-                        event_loop,
-                        &window,
-                        window_entity.into(),
-                    );
-                    window_entity
-                        .assign_components((CachedWindow {
-                            window: window.clone(),
-                        },))
-                        .unwrap();
-                    self.app
-                        .world
-                        .send_event(WindowCreated {
-                            window: window_entity.into(),
-                        })
-                        .unwrap();
-                }
-            });
-
-        let removed = self.app.world.query_removed::<(Window,)>().unwrap();
-        if removed.len() > 0 {
-            let mut windows_to_drop = self.app.world.get_resource_mut::<WindowsToDrop>().unwrap();
-            windows_to_drop.0.clear();
-            removed.iter().for_each(|window_entity| {
-                if let Some(window) = windows.remove_window(window_entity.into()) {
-                    windows_to_drop.0.push(window);
-                    self.app
-                        .world
-                        .send_event(WindowClosed {
-                            window: window_entity.into(),
-                        })
-                        .unwrap();
-                }
-            });
+            .run_query::<(Entity, &Window), Added<Window>>("winit_update")
+            .into_iter()
+            .map(|(entity, window)| {
+                self.app
+                    .world
+                    .get_resource_mut::<Windows>()
+                    .unwrap()
+                    .create_winit_window(&self.app.world, event_loop, &window, entity);
+                self.app
+                    .world
+                    .send_event(WindowCreated { window: entity })
+                    .unwrap();
+                (
+                    entity,
+                    CachedWindow {
+                        window: window.clone(),
+                    },
+                )
+            })
+            .collect::<Vec<_>>()
+        {
+            self.app
+                .world
+                .assign_components(cached_window, entity)
+                .unwrap();
         }
 
         // exit if no windows are present
-        if windows.winit_windows.is_empty() {
+        if self
+            .app
+            .world
+            .get_resource::<Windows>()
+            .unwrap()
+            .winit_windows
+            .is_empty()
+        {
             event_loop.exit();
         }
     }
 }
 
-fn winit_event_loop(app: App) {
+fn winit_event_loop(mut app: App) {
     // create primary window
     app.world.create_entity((Window::new(),)).unwrap();
     // set up winit event loop
@@ -469,209 +457,13 @@ fn winit_event_loop(app: App) {
     event_loop.run_app(&mut app).unwrap();
 }
 
-#[derive(Clone, PartialEq, Debug, Default)]
+#[derive(Component, Clone, PartialEq, Debug, Default)]
 pub struct CachedWindow {
     pub window: Window,
 }
 
+#[derive(Default)]
 struct WindowsToDrop(Vec<WindowWrapper<WinitWindow>>);
-
-fn update_changed(
-    window: &Window,
-    cached_window: &mut CachedWindow,
-    winit_window: &mut WindowWrapper<WinitWindow>,
-    world: &World,
-) {
-    if window.title != cached_window.window.title {
-        winit_window.set_title(&window.title);
-    }
-    if window.position != cached_window.window.position {
-        match window.position {
-            WindowPosition::Pos(pos) => {
-                let should_set = match winit_window.outer_position() {
-                    Ok(current_pos) => current_pos != PhysicalPosition::new(pos.x, pos.y),
-                    Err(_) => false,
-                };
-
-                if should_set {
-                    winit_window.set_outer_position(PhysicalPosition::new(pos.x, pos.y));
-                }
-            }
-            _ => (),
-        }
-    }
-    if window.resolution != cached_window.window.resolution {
-        let _ = winit_window.request_inner_size(PhysicalSize::new(
-            window.resolution.width(),
-            window.resolution.height(),
-        ));
-    }
-    if window.resizable != cached_window.window.resizable {
-        winit_window.set_resizable(window.resizable);
-    }
-    if window.resize_limit != cached_window.window.resize_limit {
-        winit_window.set_min_inner_size(Some(PhysicalSize::new(
-            window.resize_limit.min_width(),
-            window.resize_limit.min_height(),
-        )));
-        winit_window.set_max_inner_size(Some(PhysicalSize::new(
-            window.resize_limit.max_width(),
-            window.resize_limit.max_height(),
-        )));
-    }
-    if window.mode != cached_window.window.mode {
-        let monitor = match window.mode {
-            WindowMode::Windowed => None,
-            WindowMode::BorderlessFullscreen(monitor_selection) => match monitor_selection {
-                magma_windowing::window::MonitorSelection::Current => {
-                    winit_window.current_monitor()
-                }
-                magma_windowing::window::MonitorSelection::Primary => {
-                    winit_window.primary_monitor()
-                }
-                magma_windowing::window::MonitorSelection::Entity(entity) => {
-                    match world.get_component::<Monitor>(entity) {
-                        Ok(monitor) => winit_window.available_monitors().nth(monitor.id),
-                        Err(_) => None,
-                    }
-                }
-            },
-            WindowMode::Fullscreen(monitor_selection, _) => match monitor_selection {
-                magma_windowing::window::MonitorSelection::Current => {
-                    winit_window.current_monitor()
-                }
-                magma_windowing::window::MonitorSelection::Primary => {
-                    winit_window.primary_monitor()
-                }
-                magma_windowing::window::MonitorSelection::Entity(entity) => {
-                    match world.get_component::<Monitor>(entity) {
-                        Ok(monitor) => winit_window.available_monitors().nth(monitor.id),
-                        Err(_) => None,
-                    }
-                }
-            },
-        };
-
-        match window.mode {
-            WindowMode::Windowed => winit_window.set_fullscreen(None),
-            WindowMode::BorderlessFullscreen(_) => {
-                winit_window.set_fullscreen(Some(Fullscreen::Borderless(monitor)))
-            }
-            WindowMode::Fullscreen(_, video_mode_selection) => match monitor {
-                Some(monitor) => match video_mode_selection {
-                    VideoModeSelection::Current => {
-                        winit_window.set_fullscreen(Some(Fullscreen::Exclusive(
-                            monitor
-                                .video_modes()
-                                .filter(|mode| {
-                                    mode.size() == monitor.size()
-                                        && Some(mode.refresh_rate_millihertz())
-                                            == monitor.refresh_rate_millihertz()
-                                })
-                                .max_by_key(VideoModeHandle::bit_depth)
-                                .expect("coudn't get current video mode"),
-                        )))
-                    }
-                    VideoModeSelection::Specific {
-                        size,
-                        bit_depth,
-                        refresh_rate_millihertz,
-                    } => winit_window.set_fullscreen(Some(Fullscreen::Exclusive(
-                        monitor
-                            .video_modes()
-                            .find(|mode| {
-                                mode.size() == PhysicalSize::new(size.x, size.y)
-                                    && mode.refresh_rate_millihertz() == refresh_rate_millihertz
-                                    && mode.bit_depth() == bit_depth
-                            })
-                            .expect("coudn't get specified video mode"),
-                    ))),
-                },
-                // fall back to primary monitor if no monitor was found
-                None => match video_mode_selection {
-                    VideoModeSelection::Current => {
-                        let monitor = winit_window
-                            .primary_monitor()
-                            .expect("Failed to get monitor handle");
-                        winit_window.set_fullscreen(Some(Fullscreen::Exclusive(
-                            monitor
-                                .video_modes()
-                                .filter(|mode| {
-                                    mode.size() == monitor.size()
-                                        && Some(mode.refresh_rate_millihertz())
-                                            == monitor.refresh_rate_millihertz()
-                                })
-                                .max_by_key(VideoModeHandle::bit_depth)
-                                .expect("coudn't get current video mode"),
-                        )))
-                    }
-                    VideoModeSelection::Specific {
-                        size,
-                        bit_depth,
-                        refresh_rate_millihertz,
-                    } => {
-                        let monitor = winit_window
-                            .primary_monitor()
-                            .expect("Failed to get monitor handle");
-                        winit_window.set_fullscreen(Some(Fullscreen::Exclusive(
-                            monitor
-                                .video_modes()
-                                .find(|mode| {
-                                    mode.size() == PhysicalSize::new(size.x, size.y)
-                                        && mode.refresh_rate_millihertz() == refresh_rate_millihertz
-                                        && mode.bit_depth() == bit_depth
-                                })
-                                .expect("coudn't get specified video mode"),
-                        )))
-                    }
-                },
-            },
-        }
-    }
-    if window.cursor_mode != cached_window.window.cursor_mode {
-        match window.cursor_mode {
-            CursorMode::Free => (),
-            CursorMode::Confined => winit_window
-                .set_cursor_grab(CursorGrabMode::Confined)
-                .or_else(|_| winit_window.set_cursor_grab(CursorGrabMode::Locked))
-                .unwrap(),
-            CursorMode::Locked => winit_window
-                .set_cursor_grab(CursorGrabMode::Locked)
-                .or_else(|_| winit_window.set_cursor_grab(CursorGrabMode::Confined))
-                .unwrap(),
-        }
-    }
-    if window.cursor_position != cached_window.window.cursor_position {
-        winit_window
-            .set_cursor_position(PhysicalPosition::new(
-                window.cursor_position.x,
-                window.cursor_position.y,
-            ))
-            .or::<()>(Ok(()))
-            .unwrap();
-    }
-    if window.cursor_visible != cached_window.window.cursor_visible {
-        winit_window.set_cursor_visible(window.cursor_visible);
-    }
-    if window.decorations != cached_window.window.decorations {
-        winit_window.set_decorations(window.decorations);
-    }
-    if window.titlebar_buttons != cached_window.window.titlebar_buttons {
-        winit_window.set_enabled_buttons(convert_titlebar_buttons(window.titlebar_buttons));
-    }
-    if window.transparent != cached_window.window.transparent {
-        winit_window.set_transparent(window.transparent);
-    }
-    if window.window_theme != cached_window.window.window_theme {
-        match window.window_theme {
-            WindowTheme::Auto => winit_window.set_theme(None),
-            WindowTheme::Light => winit_window.set_theme(Some(winit::window::Theme::Light)),
-            WindowTheme::Dark => winit_window.set_theme(Some(winit::window::Theme::Dark)),
-        }
-    }
-
-    cached_window.window = window.clone();
-}
 
 fn map_key_code(key: winit::keyboard::PhysicalKey) -> magma_input::keyboard::KeyCode {
     match key {
