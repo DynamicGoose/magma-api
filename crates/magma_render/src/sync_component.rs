@@ -5,12 +5,12 @@ use std::{
 };
 
 use feufeu::RenderState;
-use magma_app::{World, entities::Entity, module::Module};
+use magma_app::{World, entities::Entity, magma_ecs::component::Component, module::Module};
 
 use crate::{SyncSchedule, sync_entity::RenderEntity};
 
 /// A component, that can be synced to the render world.
-pub trait SyncComponent: Send + Sync {
+pub trait SyncComponent: Component {
     type Out: Send + Sync;
 
     fn get_data(entity: Entity, world: &World) -> Self::Out;

@@ -1,11 +1,11 @@
 use feufeu::RenderState;
-use magma_app::{World, entities::Entity, module::Module};
+use magma_app::{World, entities::Entity, magma_ecs::component::Component, module::Module};
 
 use crate::SyncSchedule;
 
 /// A component that is added to main world entities synced to the render world.
 /// It contains the corresponding render world entity.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub struct RenderEntity(Entity);
 
 impl RenderEntity {
@@ -22,7 +22,7 @@ impl RenderEntity {
 
 /// A component that is added to render world entities synced with the main world.
 /// It contains the corresponding main world entity.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub struct MainEntity(Entity);
 
 impl MainEntity {
@@ -37,7 +37,7 @@ impl MainEntity {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+#[derive(Component, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub struct SyncToRenderWorld;
 
 fn sync_entities(world: &World) {

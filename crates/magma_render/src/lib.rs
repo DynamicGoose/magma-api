@@ -39,12 +39,14 @@ impl Module for RenderModule {
 
 pub struct RenderApp {
     pub app: WrappedApp,
+    pub render_state: RenderState<'static, 'static>,
 }
 
 impl RenderApp {
     pub fn new(app: App) -> Self {
         Self {
             app: WrappedApp::new(app),
+            render_state: RenderState::default(),
         }
     }
 }
@@ -91,7 +93,14 @@ impl ApplicationHandler for RenderApp {
         self.app.winit_update(event_loop);
 
         self.app.app.run_schedule::<SyncSchedule>().unwrap();
-
+        let renderer = self
+            .app
+            .app
+            .world
+            .get_resource::<Renderer>()
+            .unwrap()
+            .0
+            .to_owned();
         join(
             || {
                 self.app.app.run_schedule::<PreUpdate>().unwrap();
@@ -100,15 +109,13 @@ impl ApplicationHandler for RenderApp {
                 self.app.app.process_events();
             },
             || {
-                (self.app.app.world.get_resource::<Renderer>().unwrap().0)(
-                    &self.app.app.world.get_resource::<RenderState>().unwrap(),
-                );
+                (renderer)(&self.render_state);
             },
         );
     }
 }
 
-fn rendering_update_loop(app: App) {
+fn rendering_update_loop(mut app: App) {
     app.world
         .create_entity((Window::new(), SyncToRenderWorld))
         .unwrap();
