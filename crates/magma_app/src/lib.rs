@@ -7,14 +7,13 @@ use std::{
     collections::HashMap,
 };
 
-use magma_ecs::{
-    error::EventError,
-    systems::{IntoSystem, SystemGraph, dispatcher::Dispatcher, system_params::SystemParam},
+use magma_ecs::systems::{
+    IntoSystem, SystemGraph, dispatcher::Dispatcher, system_params::SystemParam,
 };
 use module::Module;
 
 pub use magma_ecs;
-pub use magma_ecs::{World, entities, rayon, resources, systems};
+pub use magma_ecs::{World, rayon, systems};
 pub use schedule::AppSchedule;
 
 use crate::{
@@ -34,7 +33,6 @@ pub struct App {
     runner: fn(App),
     modules: Vec<TypeId>,
     systems: HashMap<TypeId, (SystemGraph, Dispatcher)>,
-    event_systems: HashMap<TypeId, (SystemGraph, Dispatcher)>,
 }
 
 impl Default for App {
@@ -44,7 +42,6 @@ impl Default for App {
             runner: default_runner,
             modules: vec![],
             systems: Default::default(),
-            event_systems: Default::default(),
         };
 
         app.register_schedule::<Startup>();
@@ -123,7 +120,7 @@ impl App {
     use magma_app::schedule::Startup;
 
     let mut app = App::new();
-    app.add_system(Startup, example_system, vec![]).unwrap();
+    app.add_system(Startup, example_system).unwrap();
 
     fn example_system(world: &mut World) {
         // E.g. change something in the World
@@ -134,13 +131,12 @@ impl App {
         &mut self,
         schedule: S,
         system: impl IntoSystem<In, Marker>,
-        deps: Vec<String>,
     ) -> Result<(), ScheduleError> {
         let schedule = self
             .systems
             .get_mut(&schedule.type_id())
             .ok_or(ScheduleError::ScheduleNotRegistered)?;
-        schedule.0.add_system(system, deps).unwrap();
+        schedule.0.add_system(system).unwrap();
         schedule.1 = schedule
             .0
             .to_owned()
@@ -150,54 +146,12 @@ impl App {
     }
 
     pub fn register_event<E: Any + Send + Sync + Clone>(&mut self) {
-        self.world.register_event::<E>();
-        self.event_systems.insert(
-            TypeId::of::<E>(),
-            (SystemGraph::new(), Dispatcher::default()),
-        );
-    }
-
-    pub fn add_event_system<E: Any + Send + Sync + Clone, In: SystemParam, Marker>(
-        &mut self,
-        event: E,
-        system: impl IntoSystem<In, Marker>,
-        deps: Vec<String>,
-    ) -> Result<(), EventError> {
-        let event_systems = self
-            .event_systems
-            .get_mut(&event.type_id())
-            .ok_or(EventError::EventNotRegistered)?;
-
-        event_systems.0.add_system(system, deps).unwrap();
-        event_systems.1 = event_systems
-            .0
-            .to_owned()
-            .into_dispatcher(&mut self.world)
-            .unwrap();
-        Ok(())
+        self.world.event_manager.register_event::<E>();
     }
 
     /// Set the runner of the [`App`]
     pub fn set_runner(&mut self, runner: fn(App)) {
         self.runner = runner;
-    }
-
-    /// Process pending events.
-    pub fn process_events(&mut self) {
-        let world = self.world.get_unsafe_mut();
-        let events = self.world.get_pending_events();
-        // dispatch systems for events
-        events.iter().for_each(|type_id| {
-            unsafe {
-                self.event_systems
-                    .get_mut(type_id)
-                    .unwrap()
-                    .1
-                    .dispatch_unsafe(world)
-            };
-        });
-
-        self.world.clear_events();
     }
 
     /// Run the Application
@@ -212,6 +166,6 @@ fn default_runner(mut app: App) {
         app.run_schedule::<PreUpdate>().unwrap();
         app.run_schedule::<Update>().unwrap();
         app.run_schedule::<PostUpdate>().unwrap();
-        app.process_events();
+        app.world.event_manager.clear();
     }
 }
