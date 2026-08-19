@@ -1,0 +1,11 @@
+[package]
+name = "magma_app"
+version = "0.3.0-alpha"
+edition = "2024"
+description = "Part of the Magma-API, which is the API of the Magma3D game engine."
+homepage = "https://dynamicgoose.github.io/magma3d-engine/"
+license = "MIT"
+repository = "https://codeberg.org/DynamicGoose/magma-api"
+
+[dependencies]
+magma_ecs = "0.6.0-alpha"
