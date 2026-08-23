@@ -23,20 +23,25 @@ impl Schedule {
         }
     }
 
-    pub fn init(&mut self, world: &mut World) {
-        let dispatcher = self.graph.clone().into_dispatcher(world).unwrap();
+    /// Initialize this [`Schedule`] on the provided [`World`](magma_ecs::World).
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the systems in this [`Schedule`] could not be converted into a [`Dispatcher`](magma_ecs::Dispatcher).
+    pub fn init(&mut self, world: &mut World) -> Result<(), SystemError> {
+        let dispatcher = self.graph.clone().into_dispatcher(world)?;
 
         self.dispatcher = Some(dispatcher);
+        Ok(())
     }
 
+    /// Run the [`Schedule`] on the provided [`World`](magma_ecs::World).
+    ///
+    /// # Panics
+    ///
+    /// Panics if the [`Schedule`] has not been initialized.
     pub fn run(&mut self, world: &mut World) {
-        match &mut self.dispatcher {
-            Some(d) => d.dispatch(world),
-            None => {
-                self.init(world);
-                self.dispatcher.as_mut().unwrap().dispatch(world);
-            }
-        }
+        self.dispatcher.as_mut().unwrap().dispatch(world);
     }
 
     pub fn add_system<In: SystemParam, Marker>(
@@ -79,3 +84,19 @@ impl Schedules {
 }
 
 pub trait ScheduleLabel: Copy {}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+pub struct Startup;
+impl ScheduleLabel for Startup {}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+pub struct PreUpdate;
+impl ScheduleLabel for PreUpdate {}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+pub struct Update;
+impl ScheduleLabel for Update {}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+pub struct PostUpdate;
+impl ScheduleLabel for PostUpdate {}
