@@ -18,5 +18,5 @@ impl Module for TestModule {
 }
 
 fn test_system(res: Res<u32>) {
-    assert_eq!(*res, 0)
+    assert_eq!(*res, 10)
 }

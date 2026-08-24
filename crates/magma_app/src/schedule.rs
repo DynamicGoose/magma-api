@@ -11,39 +11,36 @@ use magma_ecs::{
 
 #[derive(Clone, Debug, Default)]
 pub struct Schedule {
-    dispatcher: Option<Dispatcher>,
+    dispatcher: Dispatcher,
     graph: SystemGraph,
 }
 
 impl Schedule {
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
-            dispatcher: None,
+            dispatcher: Dispatcher::default(),
             graph: SystemGraph::new(),
         }
     }
 
-    /// Initialize this [`Schedule`] on the provided [`World`](magma_ecs::World).
+    /// Initialize this [`Schedule`] on the provided [`World`].
     ///
     /// # Errors
     ///
-    /// This function will return an error if the systems in this [`Schedule`] could not be converted into a [`Dispatcher`](magma_ecs::Dispatcher).
+    /// This function will return an error if the systems in this [`Schedule`] could not be converted into a [`Dispatcher`].
     pub fn init(&mut self, world: &mut World) -> Result<(), SystemError> {
         let dispatcher = self.graph.clone().into_dispatcher(world)?;
 
-        self.dispatcher = Some(dispatcher);
+        self.dispatcher = dispatcher;
         Ok(())
     }
 
-    /// Run the [`Schedule`] on the provided [`World`](magma_ecs::World).
-    ///
-    /// # Panics
-    ///
-    /// Panics if the [`Schedule`] has not been initialized.
+    /// Run the [`Schedule`] on the provided [`World`].
     pub fn run(&mut self, world: &mut World) {
-        self.dispatcher.as_mut().unwrap().dispatch(world);
+        self.dispatcher.dispatch(world);
     }
 
+    /// Add a system to the schedule
     pub fn add_system<In: SystemParam, Marker>(
         &mut self,
         system: impl IntoSystem<In, Marker>,
@@ -52,9 +49,24 @@ impl Schedule {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct Schedules {
     map: HashMap<TypeId, Schedule>,
+}
+
+impl Default for Schedules {
+    fn default() -> Self {
+        let mut schedules = Self {
+            map: Default::default(),
+        };
+
+        schedules.insert(Startup, Default::default());
+        schedules.insert(PreUpdate, Default::default());
+        schedules.insert(Update, Default::default());
+        schedules.insert(PostUpdate, Default::default());
+
+        schedules
+    }
 }
 
 impl Schedules {

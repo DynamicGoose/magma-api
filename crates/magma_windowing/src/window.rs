@@ -64,6 +64,11 @@ impl Window {
     pub fn update(&mut self, epoch: Epoch) {
         self.change_epoch.update(epoch);
     }
+
+    /// Has the window changed after the provided epoch
+    pub fn changed(&self, epoch: Epoch) -> bool {
+        self.change_epoch.after(epoch)
+    }
 }
 
 /// Marks a window that has been requested to close

@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use magma_app::{
     App,
-    schedule::{Startup, Update},
+    schedule::{PreUpdate, Startup, Update},
 };
 use magma_ecs::{ComponentStore, component::Component, resource::ResMut};
 
@@ -49,6 +49,7 @@ fn update_resource(mut res: ResMut<u32>) {
 fn test_runner(mut app: App) {
     app.run_schedule(Startup);
     for _ in 0..10 {
+        app.run_schedule(PreUpdate);
         app.run_schedule(Update);
         app.world.event_manager.clear();
     }
