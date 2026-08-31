@@ -4,6 +4,8 @@ pub use magma_app;
 // pub use magma_ui;
 #[cfg(feature = "input")]
 pub use magma_input;
+#[cfg(feature = "render")]
+pub use magma_render;
 #[cfg(feature = "windowing")]
 pub use magma_windowing;
 #[cfg(feature = "winit")]
@@ -23,6 +25,8 @@ impl Module for DefaultModules {
         app.add_module(magma_windowing::WindowingModule);
         #[cfg(feature = "winit")]
         app.add_module(magma_winit::WinitModule);
+        #[cfg(feature = "render")]
+        app.add_module(magma_render::RenderModule);
     }
 }
 

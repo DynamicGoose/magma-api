@@ -23,7 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-// system for closing the opened windows
+// example system for closing the opened windows
 fn close_windows(component_store: &mut ComponentStore) {
     for index in component_store
         .get_components_ref::<Window>()
@@ -67,6 +67,8 @@ use crate::systems::{winit_drop_windows, winit_update_changed_windows};
 mod systems;
 pub mod windows;
 
+pub use winit;
+
 /**
 The [`WinitModule`] adds winit as a backend for [magma_windowing](https://crates.io/crates/magma_windowing). It also automatically creates one window on application start.
 */
@@ -87,17 +89,17 @@ impl Module for WinitModule {
     }
 }
 
-pub struct WrappedApp {
+pub struct WinitAppState {
     pub app: App,
 }
 
-impl WrappedApp {
+impl WinitAppState {
     pub fn new(app: App) -> Self {
         Self { app }
     }
 }
 
-impl ApplicationHandler for WrappedApp {
+impl ApplicationHandler for WinitAppState {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         let primary_monitor = event_loop.primary_monitor();
         for (id, winit_monitor) in event_loop.available_monitors().enumerate() {
@@ -441,7 +443,7 @@ impl ApplicationHandler for WrappedApp {
     }
 }
 
-impl WrappedApp {
+impl WinitAppState {
     pub fn winit_update(&mut self, event_loop: &ActiveEventLoop) {
         let unsafe_world = UnsafeWorldMut::new(&mut self.app.world);
         // SAFETY: Windows is never retrieved from the world, only this instance is used.
@@ -525,7 +527,7 @@ fn winit_event_loop(mut app: App) {
     // set up winit event loop
     let event_loop = EventLoop::new().unwrap();
     event_loop.set_control_flow(ControlFlow::Poll);
-    let mut app = WrappedApp::new(app);
+    let mut app = WinitAppState::new(app);
     app.app.run_schedule(Startup);
     event_loop.run_app(&mut app).unwrap();
 }
