@@ -39,8 +39,8 @@ fn close_windows(component_store: &mut ComponentStore) {
 */
 
 use glam::{IVec2, UVec2, Vec2};
-use magma_app::magma_ecs::component::Component;
-use magma_app::magma_ecs::query::Query;
+use magma_app::magma_ecs::component::{Component, ComponentsRef};
+use magma_app::magma_ecs::systems::system_params::SystemParam;
 use magma_app::magma_ecs::world::UnsafeWorldMut;
 use magma_app::schedule::{PostUpdate, PreUpdate, Startup, Update};
 use magma_app::{App, module::Module};
@@ -452,8 +452,7 @@ impl WinitAppState {
             .get_mut::<Windows>()
             .unwrap();
         // create winit windows for new window components
-        for (entity, cached_window) in Query::<&Window>::new(unsafe_world)
-            .data
+        for (entity, cached_window) in ComponentsRef::<Window>::fetch(unsafe_world, "winit_update")
             .iter()
             .filter_map(|(entity, window)| {
                 if !winit_windows.entity_to_window.contains_key(&entity) {

@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use magma_app::{
     Module,
-    magma_ecs::{Component, query::Query, resource::ResMut, world::UnsafeWorldMut},
+    magma_ecs::{Component, component::ComponentsRef, resource::ResMut, world::UnsafeWorldMut},
 };
 
 use crate::{
@@ -20,25 +20,30 @@ pub trait SyncComponent: Component {
 }
 
 fn sync_component<C: SyncComponent<ExtraData = ()> + 'static>(
-    query: Query<(&C, &RenderEntity)>,
+    components: ComponentsRef<C>,
+    render_entities: ComponentsRef<RenderEntity>,
     mut render_state: ResMut<RenderState>,
 ) {
-    let render_query = Query::<(&mut C::Out, &MainEntity)>::new(UnsafeWorldMut::new(
-        &mut render_state.render_world,
-    ));
-    for (index, main_entity) in render_query.data.1 {
-        if query.data.0.get(main_entity.id()).is_none() {
-            render_query.data.0.remove(index);
+    // SAFETY: Not borrowing the same data
+    let main_entities = unsafe { UnsafeWorldMut::new(&mut render_state.render_world).get_ref() }
+        .component_store
+        .get_components_ref::<MainEntity>()
+        .unwrap();
+    let render_components = render_state
+        .render_world
+        .component_store
+        .get_components_mut::<C::Out>()
+        .unwrap();
+    for (index, main_entity) in main_entities {
+        if components.get(main_entity.id()).is_none() {
+            render_components.remove(index);
         }
     }
 
-    for (index, c) in query.data.0 {
-        match query.data.1.get(index) {
+    for (index, c) in components.iter() {
+        match render_entities.get(index) {
             Some(render_entity) => {
-                render_query
-                    .data
-                    .0
-                    .insert(render_entity.id(), c.extract(index, &()));
+                render_components.insert(render_entity.id(), c.extract(index, &()));
             }
             None => (),
         }

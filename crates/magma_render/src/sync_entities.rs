@@ -2,7 +2,12 @@ use std::ops::{Deref, DerefMut};
 
 use magma_app::{
     Module,
-    magma_ecs::{Component, query::Query, resource::ResMut, world::UnsafeWorldMut},
+    magma_ecs::{
+        Component,
+        component::{ComponentsMut, ComponentsRef},
+        resource::ResMut,
+        world::UnsafeWorldMut,
+    },
 };
 
 use crate::{RenderSync, render_state::RenderState};
@@ -57,7 +62,8 @@ impl DerefMut for MainEntity {
 pub struct SyncToRenderWorld;
 
 fn sync_entities(
-    query: Query<(&SyncToRenderWorld, &mut RenderEntity)>,
+    sync_to_render_world: ComponentsRef<SyncToRenderWorld>,
+    mut render_entities: ComponentsMut<RenderEntity>,
     mut render_state: ResMut<RenderState>,
 ) {
     for (index, main_entity) in
@@ -66,7 +72,7 @@ fn sync_entities(
             .get_components_ref::<MainEntity>()
             .unwrap()
     {
-        if query.data.0.get(main_entity.id()).is_none() {
+        if sync_to_render_world.get(main_entity.id()).is_none() {
             render_state
                 .render_world
                 .component_store
@@ -74,14 +80,14 @@ fn sync_entities(
         };
     }
 
-    for (index, _) in query.data.0 {
-        if query.data.1.get(index).is_none() {
+    for (index, _) in sync_to_render_world.iter() {
+        if render_entities.get(index).is_none() {
             let render_entity = render_state
                 .render_world
                 .component_store
                 .create_entity(MainEntity(index))
                 .unwrap();
-            query.data.1.insert(index, RenderEntity(render_entity));
+            render_entities.insert(index, RenderEntity(render_entity));
         }
     }
 }

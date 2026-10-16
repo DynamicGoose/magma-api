@@ -1,6 +1,7 @@
+use magma_app::magma_ecs::component::{ComponentsMut, ComponentsRef};
 use magma_app::magma_ecs::epoch::Epoch;
 use magma_app::magma_ecs::local::Local;
-use magma_app::magma_ecs::{query::Query, resource::ResMut};
+use magma_app::magma_ecs::resource::ResMut;
 use magma_windowing::window::{
     CursorMode, VideoModeSelection, WindowMode, WindowPosition, WindowTheme,
 };
@@ -13,20 +14,20 @@ use crate::windows::{Windows, convert_titlebar_buttons};
 use crate::{CachedWindow, WindowsToDrop};
 
 pub fn winit_update_changed_windows(
-    query: Query<(&Window, &mut CachedWindow, &Monitor)>,
-    mut windows: ResMut<Windows>,
+    // query: Query<(&Window 1, &mut CachedWindow 2, &Monitor 3)>,
+    windows: ComponentsRef<Window>,
+    mut cached_windows: ComponentsMut<CachedWindow>,
+    monitors: ComponentsRef<Monitor>,
+    mut winit_windows: ResMut<Windows>,
     mut last_epoch: Local<Epoch>,
     current_epoch: Epoch,
 ) {
-    let monitors = query.data.2;
-    for (entity, window) in query
-        .data
-        .0
+    for (entity, window) in windows
         .iter()
         .filter(|(_, window)| window.changed(*last_epoch))
     {
-        let cached_window = query.data.1.get_mut(entity).unwrap();
-        let winit_window = windows.get_window_mut(entity).unwrap();
+        let cached_window = cached_windows.get_mut(entity).unwrap();
+        let winit_window = winit_windows.get_window_mut(entity).unwrap();
 
         if window.title != cached_window.window.title {
             winit_window.set_title(&window.title);

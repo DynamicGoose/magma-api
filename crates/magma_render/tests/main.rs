@@ -1,8 +1,11 @@
-use magma_app::magma_ecs::ComponentStore;
-use magma_app::magma_ecs::resource::ResMut;
+use magma_app::magma_ecs::component::ComponentsRef;
+use magma_app::magma_ecs::resource::{Res, ResMut};
+use magma_app::magma_ecs::systems::IntoSystem;
+use magma_app::magma_ecs::{Component, ComponentStore};
 use magma_app::{App, module::Module, schedule::Update};
-use magma_render::RenderModule;
-use magma_render::sync_entities::SyncToRenderWorld;
+use magma_render::sync_entities::{RenderEntity, SyncToRenderWorld};
+use magma_render::sync_windows::RenderWindow;
+use magma_render::{RenderModule, RenderState, RenderSync};
 use magma_windowing::Window;
 
 fn main() {
@@ -11,7 +14,7 @@ fn main() {
     let mut app = App::new();
     app.add_module(RenderModule);
     app.add_module(TestModule);
-    for _ in 0..400 {
+    for _ in 0..4 {
         app.world
             .component_store
             .create_entity((Window::new(), SyncToRenderWorld))
@@ -25,66 +28,70 @@ struct TestModule;
 impl Module for TestModule {
     fn init(self, app: &mut App) {
         app.world.resource_store.insert(0_u32);
-        // app.world
-        //     .resource_store
-        //     .get_mut::<RenderState>()
-        //     .unwrap()
-        //     .render_world
-        //     .component_store
-        //     .register_component::<TestRenderComp>();
-        // app.add_system(
-        //     RenderSync,
-        //     check_render_windows.after(magma_render::sync_windows::sync_window_changes),
-        // )
-        // .unwrap();
-        // app.add_system(RenderSync, get_test_comp).unwrap();
-        // app.add_system(Update, count_exit).unwrap();
+        app.world
+            .resource_store
+            .get_mut::<RenderState>()
+            .unwrap()
+            .render_world
+            .component_store
+            .register_component::<TestRenderComp>();
+        app.add_system(
+            RenderSync,
+            check_render_windows.after(magma_render::sync_windows::sync_window_changes),
+        )
+        .unwrap();
+        app.add_system(RenderSync, get_test_comp).unwrap();
+        app.add_system(Update, count_exit).unwrap();
     }
 }
 
-// #[derive(Component, Debug)]
-// struct TestRenderComp;
+#[derive(Component, Debug)]
+struct TestRenderComp;
 
-// fn check_render_windows(query: Query<(&Window, &RenderEntity)>, state: Res<RenderState>) {
-//     for (index, _) in query.data.0 {
-//         match query.data.1.get(index) {
-//             Some(render_entity) => {
-//                 match state
-//                     .render_world
-//                     .component_store
-//                     .get_components_ref::<RenderWindow>()
-//                     .unwrap()
-//                     .get(render_entity.id())
-//                 {
-//                     Some(render_window) => println!(
-//                         "Window with render id {} has render window {:?}",
-//                         render_entity.id(),
-//                         render_window
-//                     ),
-//                     None => println!(
-//                         "Window has following render id {}, but no window",
-//                         render_entity.id()
-//                     ),
-//                 }
-//             }
-//             None => println!("Window does not have render id"),
-//         }
-//     }
-// }
+fn check_render_windows(
+    windows: ComponentsRef<Window>,
+    render_entities: ComponentsRef<RenderEntity>,
+    state: Res<RenderState>,
+) {
+    for (index, _) in windows.iter() {
+        match render_entities.get(index) {
+            Some(render_entity) => {
+                match state
+                    .render_world
+                    .component_store
+                    .get_components_ref::<RenderWindow>()
+                    .unwrap()
+                    .get(render_entity.id())
+                {
+                    Some(render_window) => println!(
+                        "Window with render id {} has render window {:?}",
+                        render_entity.id(),
+                        render_window
+                    ),
+                    None => println!(
+                        "Window has following render id {}, but no window",
+                        render_entity.id()
+                    ),
+                }
+            }
+            None => println!("Window does not have render id"),
+        }
+    }
+}
 
-// fn get_test_comp(state: Res<RenderState>) {
-//     println!(
-//         "{:?}",
-//         state
-//             .render_world
-//             .component_store
-//             .get_components_ref::<TestRenderComp>()
-//             .unwrap()
-//     );
-// }
+fn get_test_comp(state: Res<RenderState>) {
+    println!(
+        "{:?}",
+        state
+            .render_world
+            .component_store
+            .get_components_ref::<TestRenderComp>()
+            .unwrap()
+    );
+}
 
 fn count_exit(store: &mut ComponentStore, mut counter: ResMut<u32>) {
-    if *counter >= 500 {
+    if *counter >= 400 {
         for index in store
             .get_components_ref::<Window>()
             .unwrap()

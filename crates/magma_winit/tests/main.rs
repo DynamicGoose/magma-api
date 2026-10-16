@@ -1,6 +1,6 @@
 use magma_app::{
     App, World,
-    magma_ecs::{ComponentStore, query::Query, systems::IntoSystem},
+    magma_ecs::{ComponentStore, component::ComponentsRef, systems::IntoSystem},
     schedule::Update,
 };
 use magma_windowing::{Monitor, Window};
@@ -40,10 +40,10 @@ fn close_windows(component_store: &mut ComponentStore) {
     }
 }
 
-fn print_monitors(windows: Query<&Window>, monitors: Query<&Monitor>) {
-    if windows.data.len() == 0 {
+fn print_monitors(windows: ComponentsRef<Window>, monitors: ComponentsRef<Monitor>) {
+    if windows.len() == 0 {
         println!("monitor test...");
-        for (_, monitor) in monitors.data {
+        for (_, monitor) in monitors.iter() {
             println!("{:?}", monitor);
         }
     }

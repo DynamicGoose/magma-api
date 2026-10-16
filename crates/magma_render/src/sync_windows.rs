@@ -4,8 +4,8 @@ use magma_app::{
     Module,
     magma_ecs::{
         Component,
+        component::ComponentsRef,
         events::OnEvents,
-        query::Query,
         resource::{Res, ResMut},
         systems::IntoSystem,
         world::UnsafeWorldMut,
@@ -106,12 +106,12 @@ impl SyncComponent for Window {
 pub fn sync_deleted_windows(
     events: OnEvents<WindowClosed>,
     mut render_state: ResMut<RenderState>,
-    query: Query<&RenderEntity>,
+    query: ComponentsRef<RenderEntity>,
 ) {
     events
         .events
         .iter()
-        .for_each(|event| match query.data.get(event.window) {
+        .for_each(|event| match query.get(event.window) {
             Some(render_entity) => {
                 render_state
                     .render_world
@@ -150,7 +150,9 @@ pub fn sync_deleted_windows(
 }
 
 pub fn sync_window_changes(
-    query: Query<(&Window, &RenderEntity)>,
+    // query: Query<(&Window, &RenderEntity)>,
+    windows: ComponentsRef<Window>,
+    render_entities: ComponentsRef<RenderEntity>,
     mut render_state: ResMut<RenderState>,
 ) {
     // SAFETY: Not accessing the same data
@@ -162,8 +164,8 @@ pub fn sync_window_changes(
         .component_store
         .get_components_mut::<SurfaceData>()
         .unwrap();
-    for (index, window) in query.data.0 {
-        match query.data.1.get(index) {
+    for (index, window) in windows.iter() {
+        match render_entities.get(index) {
             Some(render_entity) => {
                 if let Some(render_window) = render_windows.get_mut(render_entity.id()) {
                     let surface_data = render_surfaces.get_mut(render_entity.id()).unwrap();
@@ -305,14 +307,13 @@ pub fn sync_created_windows(
     events: OnEvents<WindowCreated>,
     mut render_state: ResMut<RenderState>,
     windows: Res<Windows>,
-    query: Query<(&RenderEntity, &Window)>,
+    render_entities: ComponentsRef<RenderEntity>,
+    window_components: ComponentsRef<Window>,
 ) {
     for event in events.events {
-        match query.data.0.get(event.window) {
+        match render_entities.get(event.window) {
             Some(render_entity) => {
-                let mut extracted_window = query
-                    .data
-                    .1
+                let mut extracted_window = window_components
                     .get(event.window)
                     .expect("Missing window component!")
                     .extract(event.window, &windows);
