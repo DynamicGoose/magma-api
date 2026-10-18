@@ -19,6 +19,7 @@ use crate::{
 
 pub use render_state::RenderState;
 
+pub mod render_graph;
 pub mod render_state;
 pub mod sync_component;
 pub mod sync_entities;
